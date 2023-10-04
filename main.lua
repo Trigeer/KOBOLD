@@ -5,28 +5,36 @@ require("constants")
 function love.load()
     local mapData = love.filesystem.load("maps/map0.lua")()
 
+    -- Flatten the vertex table
     local vertexArr = {}
-    for vertex in mapData.vertex do
+    for _, vertex in pairs(mapData.vertex) do
         local y = vertex.y
-        for x in vertex.x do
+        for _, x in pairs(vertex.x) do
             table.insert(vertexArr, {x = x, y = y})
         end
     end
 
+    -- Prepare the sector data
     local sectorArr = mapData.sector
-    for idx = 1, #sectorArr do
-        for vidx = 1, #sectorArr[idx].vertex do
-            sectorArr[idx].vertex[vidx] = vertexArr[sectorArr[idx].vertex[vidx]]
+    for idx, sector in pairs(sectorArr) do
+        -- Replace vertex index with proper coordinates
+        -- TODO: In future needs to be more dynamic, most likely reverted to vertex index
+        for vidx, vertex in sector.vertex do
+            sectorArr[idx].vertex[vidx] = vertexArr[vertex + 1]
         end
+        -- Loop the sector
         table.insert(sectorArr[idx].vertex, 1, sectorArr[idx].vertex[#sectorArr[idx].vertex])
+
+        -- Do we need it really?
         sectorArr[idx].npoints = #sectorArr[idx].vertex
     end
 
+    -- Parse the player data
     local p = mapData.player
     local player = {
         x = p.x,
         y = p.y,
-        z = sectorArr[p.sector].floor + EyeHeight,
+        z = sectorArr[p.sector + 1].floor + EyeHeight,
         angle = p.angle,
         sector = p.sector
     }
