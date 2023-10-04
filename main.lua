@@ -1,7 +1,9 @@
 -- io.stdout:setvbuf("no")
 
 require("constants")
+local geo = require("geometricFunctions")
 
+-- Will be moved to separate file soon
 function love.load()
     local mapData = love.filesystem.load("maps/map0.lua")()
 
@@ -29,14 +31,20 @@ function love.load()
         sectorArr[idx].npoints = #sectorArr[idx].vertex
     end
 
-    -- Parse the player data
+    -- Initialize the player data
     local p = mapData.player
     local player = {
-        x = p.x,
-        y = p.y,
-        z = sectorArr[p.sector + 1].floor + EyeHeight,
+        where = {
+            x = p.x,
+            y = p.y,
+            z = sectorArr[p.sector + 1].floor + EyeHeight
+        },
         angle = p.angle,
-        sector = p.sector
+        sector = p.sector,
+        velocity = { x = 0, y = 0, z = 0 },
+        pitch = 0,
+        ground = false,
+        falling = true
     }
 
     return {sectorArr, player}
