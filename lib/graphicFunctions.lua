@@ -5,7 +5,7 @@ local geo = require("lib.geometricFunctions")
 local graphics = {}
 
 -- Local constants
-local near = 1e-5
+local near = 0.00001
 
 -- A custom line method
 local function vline(x, yTop, yLow, color, outline)
@@ -49,17 +49,17 @@ local function vline(x, yTop, yLow, color, outline)
     end
 end
 
-local function drawSector(mapData, camera, now, yTop, yLow, depth)
-    local sector = mapData[now.sector]
+local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
+    local sector = sectors[now.sector]
 
     -- Render each wall
     for s = 1, sector.npoints do
-        
+ 
         -- Obtain the coordinates of 2 endpoints of rendered edge
-        local vx0 = sector.vertex[s + 0].x - camera.where.x
-        local vy0 = sector.vertex[s + 0].y - camera.where.y
-        local vx1 = sector.vertex[s + 1].x - camera.where.x
-        local vy1 = sector.vertex[s + 1].y - camera.where.y
+        local vx0 = verteces[sector.vertex[s + 0]].x - camera.where.x
+        local vy0 = verteces[sector.vertex[s + 0]].y - camera.where.y
+        local vx1 = verteces[sector.vertex[s + 1]].x - camera.where.x
+        local vy1 = verteces[sector.vertex[s + 1]].y - camera.where.y
 
         -- Rotate them around camera's view
         local camCos = math.cos(camera.angle)
@@ -70,9 +70,9 @@ local function drawSector(mapData, camera, now, yTop, yLow, depth)
         local tz1 = vx0 * camCos + vy0 * camSin
 
         -- Only render if at least partially in front of the camera
-        if tz0 < near and tz1 < near then goto continue end
+        if tz0 <= near and tz1 <= near then goto continue end
         -- Clip against view frustrum
-        if tz0 < near or tz1 < near then
+        if tz0 <= near or tz1 <= near then
             -- Calculate intersection point
             local inter = geo.intersect(geo.intercheck(
                     tx0, tz0, tx1, tz1,
@@ -97,7 +97,11 @@ local function drawSector(mapData, camera, now, yTop, yLow, depth)
         local x0 = ScreenWidth / 2 - math.floor(tx0 * xScale0 + 0.5)
         local x1 = ScreenWidth / 2 - math.floor(tx1 * xScale1 + 0.5)
         -- Only render if visible
+
+        print("Me here")
+        print(x0 .. " " .. x1)
         if x0 >= x1 or x1 < now.sx0 or x0 > now.sx1 then goto continue end
+        print("Still here")
 
         -- Obtain floor and ceiling heights, relative to camera position
         local yCeil  = sector.ceil  - camera.where.z
@@ -118,8 +122,8 @@ local function drawSector(mapData, camera, now, yTop, yLow, depth)
         if neighbor >= 0 then
             
             -- Obtain floor and ceiling heights, relative to camera position
-            local nCeil  = mapData[neighbor + 1].ceil  - camera.where.z
-            local nFloor = mapData[neighbor + 1].floor - camera.where.z
+            local nCeil  = sectors[neighbor + 1].ceil  - camera.where.z
+            local nFloor = sectors[neighbor + 1].floor - camera.where.z
 
             -- Project ceiling and floor heights onto screen y-coordinate
             nCeil0  = math.floor(ScreenHeight / 2) - math.floor((nCeil  + tz0 * camera.pitch) * yScale0)
@@ -132,18 +136,21 @@ local function drawSector(mapData, camera, now, yTop, yLow, depth)
         -- Render the wall
         local xBegin = math.max(x0, now.sx0)
         local xEnd   = math.min(x1, now.sx1)
+        -- print(xBegin .. " " .. xEnd)
         for x = xBegin, xEnd do
             
             -- Calculate this points z-coordinate for shading
-            local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
-            local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
-            local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
+            -- local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
+            -- local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
+            -- local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
+            local shader = 0
 
             -- Obtain y-coordinate for ceiling and floor for this x-coordinate, clamp them
             local ceil  = geo.clamp(math.floor((x - x0) * (yCeil1  - yCeil0)  / (x1 - x0) + yCeil0),  yTop[x], yLow[x])
             local floor = geo.clamp(math.floor((x - x0) * (yFloor1 - yFloor0) / (x1 - x0) + yFloor0), yTop[x], yLow[x])
 
             -- Render ceiling and floor: everything above and below relevent heights
+            print(x .. " " .. yTop[x] .. " " .. ceil - 1)
             vline(x, yTop[x],   ceil - 1, {34, 34, 34, 255}, {17, 17, 17, 255}) -- Ceiling
             vline(x, floor + 1, yLow[x],  {0, 0, 170, 255},  {0, 0, 255, 255}) -- Floor
 
@@ -172,7 +179,7 @@ local function drawSector(mapData, camera, now, yTop, yLow, depth)
         -- Schedule neighboring sector
         if neighbor >= 0 and xEnd > xBegin and depth >= 0 then
             drawSector(
-                mapData, camera,
+                verteces, sectors, camera,
                 {
                     sector = neighbor + 1,
                     sx0 = xBegin,
@@ -188,22 +195,22 @@ local function drawSector(mapData, camera, now, yTop, yLow, depth)
     
 end
 
-graphics.drawScreen = function (mapData, camera)
+graphics.drawScreen = function (verteces, sectors, camera)
     -- Prepare screen bounds
     local yTop = {}
     local yLow = {}
     for i = 1, ScreenWidth do
-        yTop[i] = 0
-        yLow[i] = ScreenHeight - 1
+        yTop[i] = 1
+        yLow[i] = ScreenHeight
     end
 
     -- Begin from camera
     drawSector(
-        mapData, camera,
+        verteces, sectors, camera,
         {
             sector = camera.sector + 1,
-            sx0 = 0,
-            sx1 = ScreenWidth - 1
+            sx0 = 1,
+            sx1 = ScreenWidth
         },
         yTop, yLow,
         RenderDepth

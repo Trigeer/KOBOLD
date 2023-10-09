@@ -5,4 +5,5 @@ function love.conf(t)
     -- t.window.height = ScreenHeight * Scaling
     t.window.width  = 720
     t.window.height = 540
+    t.console = true
 end
