@@ -1,7 +1,8 @@
 -- io.stdout:setvbuf("no")
 
 require("constants")
-local geo = require("geometricFunctions")
+local gpx = require("lib.graphicFunctions")
+-- local geo = require("geometricFunctions")
 
 -- Will be moved to separate file soon
 function love.load()
@@ -21,7 +22,7 @@ function love.load()
     for idx, sector in pairs(sectorArr) do
         -- Replace vertex index with proper coordinates
         -- TODO: In future needs to be more dynamic, most likely reverted to vertex index
-        for vidx, vertex in sector.vertex do
+        for vidx, vertex in pairs(sector.vertex) do
             sectorArr[idx].vertex[vidx] = vertexArr[vertex + 1]
         end
         -- Loop the sector
@@ -47,7 +48,7 @@ function love.load()
         falling = true
     }
 
-    return {sectorArr, player}
+    MapData = {sectorArr, player}
 end
 
 function love.update(dt)
@@ -55,7 +56,5 @@ function love.update(dt)
 end
 
 function love.draw()
-    for i = 1, 10 do
-        love.graphics.print(tostring(i), 100, 30 + 20 * i)
-    end
+    gpx.drawScreen(MapData.sectorArr, MapData.player)
 end
