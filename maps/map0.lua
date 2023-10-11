@@ -40,8 +40,7 @@ local map0 = {
       {floor = 16, ceil = 36, vertex = {1, 6, 5, 0},                 neighbor = {-1, 7, -1, 24}}, 
       {floor = 16, ceil = 36, vertex = {0, 5, 25, 27, 45, 51},       neighbor = {-1, 23, -1, 9, -1, 8}}
     },
-    player = {x = 3, y = 9, angle = 0.4, sector = 0},
-    clone = {x = 25, y = 9, angle = 0.4, sector = 5}
+    player = {x = 3, y = 9, angle = 0.4, sector = 0}
   }
 
 return map0

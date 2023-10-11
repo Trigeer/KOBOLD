@@ -14,4 +14,4 @@ HeadMargin = 1
 KneeHeight = 2
 Radius     = -0.05
 
-RenderDepth = 8
+RenderDepth = 10

@@ -23,16 +23,11 @@ function love.load()
 
     -- Prepare the sector data
     sectorArr = mapData.sector
-    for idx, sector in pairs(sectorArr) do
-        -- Replace vertex index with proper coordinates
-        -- TODO: In future needs to be more dynamic, most likely reverted to vertex index
-        for vidx, vertex in pairs(sector.vertex) do
-            sectorArr[idx].vertex[vidx] = vertex + 1
-        end
+    for idx = 1, #sectorArr do
         -- Loop the sector
         table.insert(sectorArr[idx].vertex, 1, sectorArr[idx].vertex[#sectorArr[idx].vertex])
 
-        -- Do we need it really?
+        -- Quick access loop size
         sectorArr[idx].npoints = #sectorArr[idx].vertex - 1
     end
 
@@ -46,10 +41,7 @@ function love.load()
         },
         angle = p.angle,
         sector = p.sector,
-        velocity = { x = 0, y = 0, z = 0 },
-        pitch = 0,
-        ground = false,
-        falling = true
+        pitch = 0
     }
 end
 

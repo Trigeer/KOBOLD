@@ -56,18 +56,18 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
     for s = 1, sector.npoints do
  
         -- Obtain the coordinates of 2 endpoints of rendered edge
-        local vx0 = verteces[sector.vertex[s + 0]].x - camera.where.x
-        local vy0 = verteces[sector.vertex[s + 0]].y - camera.where.y
-        local vx1 = verteces[sector.vertex[s + 1]].x - camera.where.x
-        local vy1 = verteces[sector.vertex[s + 1]].y - camera.where.y
+        local vx0 = verteces[sector.vertex[s + 0] + 1].x - camera.where.x
+        local vy0 = verteces[sector.vertex[s + 0] + 1].y - camera.where.y
+        local vx1 = verteces[sector.vertex[s + 1] + 1].x - camera.where.x
+        local vy1 = verteces[sector.vertex[s + 1] + 1].y - camera.where.y
 
         -- Rotate them around camera's view
         local camCos = math.cos(camera.angle)
         local camSin = math.sin(camera.angle)
         local tx0 = vx0 * camSin - vy0 * camCos
-        local tz0 = vx0 * camSin - vy0 * camCos
-        local tx1 = vx1 * camCos + vy1 * camSin
-        local tz1 = vx0 * camCos + vy0 * camSin
+        local tz0 = vx0 * camCos + vy0 * camSin
+        local tx1 = vx1 * camSin - vy1 * camCos
+        local tz1 = vx1 * camCos + vy1 * camSin
 
         -- Only render if at least partially in front of the camera
         if tz0 <= near and tz1 <= near then goto continue end
@@ -97,11 +97,7 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         local x0 = ScreenWidth / 2 - math.floor(tx0 * xScale0 + 0.5)
         local x1 = ScreenWidth / 2 - math.floor(tx1 * xScale1 + 0.5)
         -- Only render if visible
-
-        print("Me here")
-        print(x0 .. " " .. x1)
         if x0 >= x1 or x1 < now.sx0 or x0 > now.sx1 then goto continue end
-        print("Still here")
 
         -- Obtain floor and ceiling heights, relative to camera position
         local yCeil  = sector.ceil  - camera.where.z
@@ -115,10 +111,10 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
 
         -- Neighbor ceiling and floor
         local neighbor = sector.neighbor[s]
-        local nCeil0  = nil
-        local nFloor0 = nil
-        local nCeil1  = nil
-        local nFloor1 = nil
+        local nCeil0  = 0
+        local nFloor0 = 0
+        local nCeil1  = 0
+        local nFloor1 = 0
         if neighbor >= 0 then
             
             -- Obtain floor and ceiling heights, relative to camera position
@@ -136,42 +132,39 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         -- Render the wall
         local xBegin = math.max(x0, now.sx0)
         local xEnd   = math.min(x1, now.sx1)
-        -- print(xBegin .. " " .. xEnd)
         for x = xBegin, xEnd do
             
             -- Calculate this points z-coordinate for shading
-            -- local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
-            -- local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
-            -- local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
-            local shader = 0
+            local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
+            local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
+            local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
 
             -- Obtain y-coordinate for ceiling and floor for this x-coordinate, clamp them
-            local ceil  = geo.clamp(math.floor((x - x0) * (yCeil1  - yCeil0)  / (x1 - x0) + yCeil0),  yTop[x], yLow[x])
-            local floor = geo.clamp(math.floor((x - x0) * (yFloor1 - yFloor0) / (x1 - x0) + yFloor0), yTop[x], yLow[x])
+            local ceil  = geo.clamp(math.floor((x - x0) * (yCeil1  - yCeil0)  / (x1 - x0) + yCeil0),  yTop[x + 1], yLow[x + 1])
+            local floor = geo.clamp(math.floor((x - x0) * (yFloor1 - yFloor0) / (x1 - x0) + yFloor0), yTop[x + 1], yLow[x + 1])
 
             -- Render ceiling and floor: everything above and below relevent heights
-            print(x .. " " .. yTop[x] .. " " .. ceil - 1)
-            vline(x, yTop[x],   ceil - 1, {34, 34, 34, 255}, {17, 17, 17, 255}) -- Ceiling
-            vline(x, floor + 1, yLow[x],  {0, 0, 170, 255},  {0, 0, 255, 255}) -- Floor
+            vline(x, yTop[x + 1],   ceil - 1, {34/255, 34/255, 34/255}, {17/255, 17/255, 17/255}) -- Ceiling
+            vline(x, floor + 1, yLow[x + 1],  {0, 0, 170/255},  {0, 0, 1}) -- Floor
 
             -- Set the color
             local hue = nil
-            if x == x0 or x == x1 then hue = 255 - shader else hue = 0 end
+            if x == x0 or x == x1 then hue = 0 else hue = (255 - shader) / 255 end
 
             -- Render wall: depends if portal or not
             if neighbor >= 0 then
-                local nCeil  = geo.clamp(math.floor((x - x0) * (nCeil1  - nCeil0)  / (x1 - x0) + nCeil0),  yTop[x], yLow[x])
-                local nFloor = geo.clamp(math.floor((x - x0) * (nFloor1 - nFloor0) / (x1 - x0) + nFloor0), yTop[x], yLow[x])
+                local nceil  = geo.clamp(math.floor((x - x0) * (nCeil1  - nCeil0)  / (x1 - x0) + nCeil0),  yTop[x + 1], yLow[x + 1])
+                local nfloor = geo.clamp(math.floor((x - x0) * (nFloor1 - nFloor0) / (x1 - x0) + nFloor0), yTop[x + 1], yLow[x + 1])
 
                 -- Render upper and lower walls
-                vline(x, ceil,       nCeil - 1, {hue, hue, hue, 255}, {0, 0, 0, 255}) -- Upper
-                vline(x, nFloor + 1, floor,     {hue, hue, hue, 255}, {0, 0, 0, 255}) -- Lower
+                vline(x, ceil,       nceil - 1, {hue, hue, hue}, {0, 0, 0}) -- Upper
+                vline(x, nfloor + 1, floor,     {hue, hue, hue}, {0, 0, 0}) -- Lower
 
                 -- Shrink the windows
-                yTop[x] = geo.clamp(math.max(ceil,  nCeil),  yTop[x], ScreenHeight - 1);
-                yLow[x] = geo.clamp(math.min(floor, nFloor), 0,       yLow[x]);
+                yTop[x + 1] = geo.clamp(math.max(ceil,  nceil),  yTop[x + 1], ScreenHeight - 1);
+                yLow[x + 1] = geo.clamp(math.min(floor, nfloor), 0,           yLow[x + 1]);
             else
-                vline(x, ceil, floor, {hue, hue, hue, 255}, {0, 0, 0, 255})
+                vline(x, ceil, floor, {hue, hue, hue}, {0, 0, 0})
             end
 
         end
@@ -200,8 +193,8 @@ graphics.drawScreen = function (verteces, sectors, camera)
     local yTop = {}
     local yLow = {}
     for i = 1, ScreenWidth do
-        yTop[i] = 1
-        yLow[i] = ScreenHeight
+        yTop[i] = 0
+        yLow[i] = ScreenHeight - 1
     end
 
     -- Begin from camera
@@ -209,8 +202,8 @@ graphics.drawScreen = function (verteces, sectors, camera)
         verteces, sectors, camera,
         {
             sector = camera.sector + 1,
-            sx0 = 1,
-            sx1 = ScreenWidth
+            sx0 = 0,
+            sx1 = ScreenWidth - 1
         },
         yTop, yLow,
         RenderDepth
