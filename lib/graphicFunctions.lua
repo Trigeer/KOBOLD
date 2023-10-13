@@ -144,8 +144,8 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
             local floor = geo.clamp(math.floor((x - x0) * (yFloor1 - yFloor0) / (x1 - x0) + yFloor0), yTop[x + 1], yLow[x + 1])
 
             -- Render ceiling and floor: everything above and below relevent heights
-            vline(x, yTop[x + 1],   ceil - 1, {34/255, 34/255, 34/255}, {17/255, 17/255, 17/255}) -- Ceiling
-            vline(x, floor + 1, yLow[x + 1],  {0, 0, 170/255},  {0, 0, 1}) -- Floor
+            vline(x, yTop[x + 1],   ceil - 1, {50/255, 50/255, 50/255}, {0, 0, 0}) -- Ceiling
+            vline(x, floor + 1, yLow[x + 1],  {50/255, 50/255, 50/255}, {0, 0, 0}) -- Floor
 
             -- Set the color
             local hue = nil
