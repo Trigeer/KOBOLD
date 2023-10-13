@@ -33,8 +33,8 @@ loader.loadMap = function (path)
         local tmp = {}
         for idx = 1, sector.npoints do
             
-            local xOff = sector.vertex[idx + 1].x - sector.vertex[idx].x
-            local yOff = sector.vertex[idx + 1].y - sector.vertex[idx].y
+            local xOff = vertexArr[sector.vertex[idx + 1] + 1].x - vertexArr[sector.vertex[idx] + 1].x
+            local yOff = vertexArr[sector.vertex[idx + 1] + 1].y - vertexArr[sector.vertex[idx] + 1].y
 
             local wallLen = math.sqrt(xOff^2 + yOff^2)
             local wallSin = yOff / wallLen
@@ -42,12 +42,12 @@ loader.loadMap = function (path)
 
             table.insert(tmp, {
                 p = {
-                    x = sector.vertex[idx].x + Radius * wallSin,
-                    y = sector.vertex[idx].y - Radius * wallCos
+                    x = vertexArr[sector.vertex[idx] + 1].x + Radius * wallSin,
+                    y = vertexArr[sector.vertex[idx] + 1].y - Radius * wallCos
                 },
                 n = {
-                    x = sector.vertex[idx + 1].x + Radius * wallSin,
-                    y = sector.vertex[idx + 1].y - Radius * wallCos
+                    x = vertexArr[sector.vertex[idx + 1] + 1].x + Radius * wallSin,
+                    y = vertexArr[sector.vertex[idx + 1] + 1].y - Radius * wallCos
                 }
             })
 
@@ -96,8 +96,7 @@ loader.loadMap = function (path)
 
         -- Control values
         velocity = {x = 0, y = 0, z = 0},
-        grounded = false,
-        falling  = true
+        grounded = false
     }
 
     return {vertexArr, sectorArr, camera}
