@@ -6,7 +6,7 @@ local mov = {}
 local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     -- Jumping
     if jump and camera.grounded then
-        camera.velocity.z = 0.5
+        camera.velocity.z = 0.7
         camera.grounded = false
     end
 
@@ -71,7 +71,7 @@ local function collideHorizontal(sectorArr, camera, eyes)
         if geo.pointSide(xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2) > 0 then goto continue end
 
         local u = geo.intercheck(xCam, yCam, xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2)
-        if u.uAB >= 0 and u.uAB < 1 and u.uCD >= 0 and u.uCD <= 1 and next(sector.neighbor[idx]) ~= nil then
+        if u.uAB > 0 and u.uAB < 1 and u.uCD >= 0 and u.uCD <= 1 and next(sector.neighbor[idx]) ~= nil then
             local holeLow = sectorArr[sector.neighbor[idx][1] + 1].floor
             local holeTop = sectorArr[sector.neighbor[idx][1] + 1].ceil
 
@@ -84,11 +84,11 @@ local function collideHorizontal(sectorArr, camera, eyes)
             end
         end
 
-        local c = geo.cast(poi.x, poi.y, x1, y1, x2, y2)
+        local c = geo.cast(xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2)
 
         c.x  = geo.clamp(c.x, math.min(x1, x2), math.max(x1, x2))
         c.y  = geo.clamp(c.y, math.min(y1, y2), math.max(y1, y2))
-        c.sd = (c.x - poi.x)^2 + (c.y - poi.y)^2
+        c.sd = (c.x - xCam + camera.velocity.x)^2 + (c.y - yCam + camera.velocity.y)^2
 
         if c.sd < poi.sd then poi = c end
 
