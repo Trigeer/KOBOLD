@@ -71,12 +71,12 @@ local function collideHorizontal(sectorArr, camera, eyes)
         if geo.pointSide(xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2) > 0 then goto continue end
 
         local u = geo.intercheck(xCam, yCam, xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2)
-        if u.uAB >= 0 and u.uAB < 1 and u.uCD >= 0 and u.uCD <= 1 and sector.neighbor[idx] >= 0 then
-            local holeLow = sectorArr[sector.neighbor[idx] + 1].floor
-            local holeTop = sectorArr[sector.neighbor[idx] + 1].ceil
+        if u.uAB >= 0 and u.uAB < 1 and u.uCD >= 0 and u.uCD <= 1 and next(sector.neighbor[idx]) ~= nil then
+            local holeLow = sectorArr[sector.neighbor[idx][1] + 1].floor
+            local holeTop = sectorArr[sector.neighbor[idx][1] + 1].ceil
 
             if holeTop >= camera.where.z + HeadMargin and holeLow <= camera.where.z - eyes + KneeHeight and holeTop - holeLow >= eyes + HeadMargin then
-                camera.sector   = sector.neighbor[idx]
+                camera.sector   = sector.neighbor[idx][1]
                 camera.grounded = false
                 -- TODO: Reduce recursion
                 collideHorizontal(sectorArr, camera, eyes)

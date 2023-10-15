@@ -115,11 +115,11 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         local nFloor0 = 0
         local nCeil1  = 0
         local nFloor1 = 0
-        if neighbor >= 0 then
+        if next(neighbor) ~= nil then
             
             -- Obtain floor and ceiling heights, relative to camera position
-            local nCeil  = sectors[neighbor + 1].ceil  - camera.where.z
-            local nFloor = sectors[neighbor + 1].floor - camera.where.z
+            local nCeil  = sectors[neighbor[1] + 1].ceil  - camera.where.z
+            local nFloor = sectors[neighbor[1] + 1].floor - camera.where.z
 
             -- Project ceiling and floor heights onto screen y-coordinate
             nCeil0  = math.floor(ScreenHeight / 2) - math.floor((nCeil  + tz0 * camera.pitch) * yScale0)
@@ -152,7 +152,7 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
             if x == x0 or x == x1 then hue = 0 else hue = (255 - shader) / 255 end
 
             -- Render wall: depends if portal or not
-            if neighbor >= 0 then
+            if next(neighbor) ~= nil then
                 local nceil  = geo.clamp(math.floor((x - x0) * (nCeil1  - nCeil0)  / (x1 - x0) + nCeil0),  yTop[x + 1], yLow[x + 1])
                 local nfloor = geo.clamp(math.floor((x - x0) * (nFloor1 - nFloor0) / (x1 - x0) + nFloor0), yTop[x + 1], yLow[x + 1])
 
@@ -170,11 +170,11 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         end
 
         -- Schedule neighboring sector
-        if neighbor >= 0 and xEnd > xBegin and depth >= 0 then
+        if next(neighbor) ~= nil and xEnd > xBegin and depth >= 0 then
             drawSector(
                 verteces, sectors, camera,
                 {
-                    sector = neighbor + 1,
+                    sector = neighbor[1] + 1,
                     sx0 = xBegin,
                     sx1 = xEnd
                 },
