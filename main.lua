@@ -19,7 +19,7 @@ end
 
 function love.update(dt)
     mov.calculateMove(
-        sectorArr, camera,
+        sectorArr, camera, dt,
         love.keyboard.isDown("space"),
         love.keyboard.isDown("lshift"),
         love.keyboard.isDown("w"),
