@@ -1,11 +1,22 @@
 -- Imports
 require("constants")
-local geo = require("lib.geometricFunctions")
+local geo  = require("lib.geometricFunctions")
+local util = require("lib.utilities")
 
 local graphics = {}
 
 -- Local constants
 local near = 0.00001
+
+local function drawCenteredText(rectX, rectY, rectWidth, rectHeight, text)
+	local font       = love.graphics.getFont()
+	local textWidth  = font:getWidth(text)
+	local textHeight = font:getHeight()
+    love.graphics.setColor({0, 0, 0})
+    love.graphics.rectangle("fill", rectX, rectY, rectWidth, rectHeight)
+    love.graphics.setColor({1, 1, 1})
+	love.graphics.print(text, rectX+rectWidth/2, rectY+rectHeight/2, 0, 1, 1, textWidth/2, textHeight/2)
+end
 
 -- A custom line method
 local function vline(x, yTop, yLow, color, outline)
@@ -14,15 +25,18 @@ local function vline(x, yTop, yLow, color, outline)
     yTop = geo.clamp(yTop, 0, ScreenHeight)
     yLow = geo.clamp(yLow, 0, ScreenHeight)
 
-    if yTop == yLow then
-        love.graphics.setColor(color)
-        love.graphics.rectangle(
-            "fill",
-            x * Scaling,
-            yTop * Scaling,
-            Scaling, Scaling -- Square
-        )
-    elseif yTop < yLow then
+    -- if yLow == 0 or yTop == ScreenHeight then return end
+
+    -- if yTop == yLow then
+    --     love.graphics.setColor(color)
+    --     love.graphics.rectangle(
+    --         "fill",
+    --         x * Scaling,
+    --         yTop * Scaling,
+    --         Scaling, Scaling -- Square
+    --     )
+    -- else
+    if yTop < yLow then
         -- Drawing the outline
         love.graphics.setColor(outline)
         love.graphics.rectangle(
@@ -132,8 +146,8 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
 
                 -- Ensure there is enough yTop, yLow tables
                 if idx > 1 then
-                    yTop[idx] = yTop[1]
-                    yLow[idx] = yLow[1]
+                    yTop[idx] = util.shallow(yTop[1])
+                    yLow[idx] = util.shallow(yLow[1])
                 end
 
             end
@@ -170,6 +184,9 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
                     local nceil  = geo.clamp(math.floor((x - x0) * (nCeil1[idx]  - nCeil0[idx])  / (x1 - x0) + nCeil0[idx]),  yTop[idx][x + 1], yLow[idx][x + 1])
                     local nfloor = geo.clamp(math.floor((x - x0) * (nFloor1[idx] - nFloor0[idx]) / (x1 - x0) + nFloor0[idx]), yTop[idx][x + 1], yLow[idx][x + 1])
 
+                    -- THERE IS ERROR
+                    -- WRONG VALUES ARE USED
+
                     -- Render upper walls
                     vline(x, ceil, nceil - 1, {hue, hue, hue}, {0, 0, 0})
                     
@@ -177,12 +194,12 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
                     yTop[idx][x + 1] = geo.clamp(math.max(ceil,  nceil),  yTop[idx][x + 1], ScreenHeight - 1)
                     yLow[idx][x + 1] = geo.clamp(math.min(floor, nfloor), 0,                yLow[idx][x + 1])
 
-                    ceil = nfloor
+                    ceil = nfloor + 1
 
                 end
 
                 -- Render lowest wall
-                vline(x, ceil + 1, floor, {hue, hue, hue}, {0, 0, 0})
+                vline(x, ceil, floor, {hue, hue, hue}, {0, 0, 0})
 
             else
                 vline(x, ceil, floor, {hue, hue, hue}, {0, 0, 0})
@@ -231,6 +248,8 @@ graphics.drawScreen = function (verteces, sectors, camera)
         yTop, yLow,
         RenderDepth
     )
+
+    drawCenteredText(680, 10, 30, 25, camera.sector)
 end
 
 return graphics
