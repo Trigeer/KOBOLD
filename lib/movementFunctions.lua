@@ -6,7 +6,7 @@ local mov = {}
 local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     -- Jumping
     if jump and camera.grounded then
-        camera.velocity.z = 0.5
+        camera.velocity.z = 0.7
         camera.grounded = false
     end
 
@@ -22,7 +22,7 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     }
 
     local acceleration = 0
-    if w or s or a or d then acceleration = 0.4 else acceleration = 0.2 end
+    if w or s or a or d then acceleration = 0.25 else acceleration = 0.2 end
 
     -- New velocity
     camera.velocity.x = (camera.velocity.x * (1 - acceleration) + moveVector.x * acceleration) * timeDelta
@@ -71,24 +71,33 @@ local function collideHorizontal(sectorArr, camera, eyes)
         if geo.pointSide(xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2) > 0 then goto continue end
 
         local u = geo.intercheck(xCam, yCam, xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2)
-        if u.uAB >= 0 and u.uAB < 1 and u.uCD >= 0 and u.uCD <= 1 and sector.neighbor[idx] >= 0 then
-            local holeLow = sectorArr[sector.neighbor[idx] + 1].floor
-            local holeTop = sectorArr[sector.neighbor[idx] + 1].ceil
+        if u.uAB > 0 and u.uAB < 1 and u.uCD >= 0 and u.uCD <= 1 and next(sector.neighbor[idx]) ~= nil then
+            local target = 0
+            for t, n in pairs(sector.neighbor[idx]) do
+                if sectorArr[n + 1].ceil >= camera.where.z + HeadMargin then
+                    target = t
+                else break end
+            end
 
-            if holeTop >= camera.where.z + HeadMargin and holeLow <= camera.where.z - eyes + KneeHeight and holeTop - holeLow >= eyes + HeadMargin then
-                camera.sector   = sector.neighbor[idx]
-                camera.grounded = false
-                -- TODO: Reduce recursion
-                collideHorizontal(sectorArr, camera, eyes)
-                return
+            if target > 0 then
+                local holeLow = sectorArr[sector.neighbor[idx][target] + 1].floor
+                local holeTop = sectorArr[sector.neighbor[idx][target] + 1].ceil
+
+                if holeLow <= camera.where.z - eyes + KneeHeight and holeTop - holeLow >= eyes + HeadMargin then
+                    camera.sector   = sector.neighbor[idx][target]
+                    camera.grounded = false
+                    -- TODO: Reduce recursion
+                    collideHorizontal(sectorArr, camera, eyes)
+                    return
+                end
             end
         end
 
-        local c = geo.cast(poi.x, poi.y, x1, y1, x2, y2)
+        local c = geo.cast(xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2)
 
         c.x  = geo.clamp(c.x, math.min(x1, x2), math.max(x1, x2))
         c.y  = geo.clamp(c.y, math.min(y1, y2), math.max(y1, y2))
-        c.sd = (c.x - poi.x)^2 + (c.y - poi.y)^2
+        c.sd = (c.x - xCam + camera.velocity.x)^2 + (c.y - yCam + camera.velocity.y)^2
 
         if c.sd < poi.sd then poi = c end
 

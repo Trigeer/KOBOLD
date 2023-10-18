@@ -15,6 +15,8 @@ function love.load()
     vertexArr = result[1]
     sectorArr = result[2]
     camera = result[3]
+
+    love.mouse.setRelativeMode(true)
 end
 
 function love.update(dt)
@@ -38,9 +40,10 @@ function love.mousemoved(x, y, dx, dy, istouch)
     mov.moveCamera(camera, dx, dy)
 end
 
--- Crouching
+-- Crouching (and mouse release)
 function love.keypressed(key, scancode, isrepeat)
     if key == "lshift" then camera.grounded = false end
+    if key == "escape" then love.mouse.setRelativeMode(false) end
 end
 
 function love.keyreleased(key, scancode, isrepeat)
