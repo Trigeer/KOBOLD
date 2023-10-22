@@ -18,22 +18,50 @@ local function drawCenteredText(rectX, rectY, rectWidth, rectHeight, text)
 	love.graphics.print(text, rectX+rectWidth/2, rectY+rectHeight/2, 0, 1, 1, textWidth/2, textHeight/2)
 end
 
+local texture = love.image.newImageData("textures/stone.png")
+local texDim  = {width = 16, height = 16}
+-- local uvMap   = {u = 1, v = 1}
+
+-- Draw scaled pixel
+local function drawPixel(x, y, color)
+    local red   = color[1] / 255
+    local green = color[2] / 255
+    local blue  = color[3] / 255
+
+    love.graphics.setColor(red, green, blue)
+    love.graphics.rectangle(
+        "fill",
+        x * Scaling,
+        y * Scaling,
+        Scaling, Scaling
+    )
+end
+
 -- A custom line method
-local function vline(x, yTop, yLow, color)
+local function vline(x, yTop, yLow, color, texH, shade)
+    texH  = texH or -1 -- Default value
+    shade = shade or 0
+
+    local texV  = 0
+    local stepV = texDim.height / (yLow - yTop)
+    -- TODO: Add clipping offset
+
     -- Limit the values to valid ranges
     x = math.abs(x)
-    yTop = geo.clamp(yTop, -1, ScreenHeight)
-    yLow = geo.clamp(yLow, -1, ScreenHeight)
+    yTop = yTop + 1
+    yLow = yLow - 1
 
-    if yTop < yLow then
-        love.graphics.setColor(color)
-        love.graphics.rectangle(
-            "fill",
-            x * Scaling,
-            yTop * Scaling,
-            Scaling,
-            (yLow - yTop) * Scaling
-        )
+    for y = yTop, yLow do
+        if texH == -1 then
+            drawPixel(x, y, color)
+        else
+            local pixel = {texV % texDim.height, texH % texDim.width}
+            local r = math.max(texture:getPixel(pixel[2], pixel[1]) * 255, 0)
+            local g = math.max(texture:getPixel(pixel[2], pixel[1]) * 255, 0)
+            local b = math.max(texture:getPixel(pixel[2], pixel[1]) * 255, 0)
+            drawPixel(x, y, {r, g, b})
+            texV = texV + stepV
+        end
     end
 end
 
@@ -131,51 +159,59 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         -- Render the wall
         local xBegin = math.max(x0, now.sx0)
         local xEnd   = math.min(x1, now.sx1)
+
+        -- Calculate texture horizontal values
+        local texH  = 0
+        local stepH = texDim.width / (xEnd - xBegin)
+        -- if x0 < xBegin then texH = stepH * (xBegin - x0) end
+
         for x = xBegin, xEnd do
-            
             -- Calculate this points z-coordinate for shading
             local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
             local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
             local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
 
             -- Obtain y-coordinate for ceiling and floor for this x-coordinate, clamp them
+            -- TODO: Change to stepped values
             local ceil  = geo.clamp(math.floor((x - x0) * (yCeil1  - yCeil0)  / (x1 - x0) + yCeil0),  yTop[1][x + 1], yLow[1][x + 1])
             local floor = geo.clamp(math.floor((x - x0) * (yFloor1 - yFloor0) / (x1 - x0) + yFloor0), yTop[1][x + 1], yLow[1][x + 1])
 
             -- Render ceiling and floor: everything above and below relevent heights
-            vline(x, yTop[1][x + 1] + 1, ceil,       {50/255, 50/255, 50/255}) -- Ceiling
-            vline(x, floor + 1,      yLow[1][x + 1], {50/255, 50/255, 50/255}) -- Floor
+            vline(x, yTop[1][x + 1], ceil,       {50, 50, 50}) -- Ceiling
+            vline(x, floor,      yLow[1][x + 1], {50, 50, 50}) -- Floor
 
             -- Set the color
-            local hue = (255 - shader) / 255
+            local hue = 255 - shader
 
             -- Render wall: depends if portal or not
             if next(neighbor) ~= nil then
                 for idx = 1, #neighbor do
+                    -- TODO: change to stepped values
                     local nceil  = geo.clamp(math.floor((x - x0) * (nCeil1[idx]  - nCeil0[idx])  / (x1 - x0) + nCeil0[idx]),  yTop[idx][x + 1], yLow[idx][x + 1])
                     local nfloor = geo.clamp(math.floor((x - x0) * (nFloor1[idx] - nFloor0[idx]) / (x1 - x0) + nFloor0[idx]), yTop[idx][x + 1], yLow[idx][x + 1])
 
                     -- Render upper walls
                     if x ~= x0 and x ~= x1 then
-                        vline(x, ceil + 1, nceil, {hue, hue, hue})
+                        vline(x, ceil, nceil, {hue, hue, hue}, texH, shader)
                     end
                     
                     -- Shrink the windows
-                    yTop[idx][x + 1] = geo.clamp(math.max(ceil,  nceil),  yTop[idx][x + 1], ScreenHeight - 1)
-                    yLow[idx][x + 1] = geo.clamp(math.min(floor, nfloor), 0,                yLow[idx][x + 1])
+                    yTop[idx][x + 1] = geo.clamp(math.max(ceil,  nceil),  yTop[idx][x + 1], ScreenHeight)
+                    yLow[idx][x + 1] = geo.clamp(math.min(floor, nfloor), -1,               yLow[idx][x + 1])
 
                     ceil = nfloor
                 end
 
                 -- Render lowest wall
                 if x ~= x0 and x ~= x1 then
-                    vline(x, ceil + 1, floor, {hue, hue, hue})
+                    vline(x, ceil, floor, {hue, hue, hue}, texH, shader)
                 end
                 
             elseif x ~= x0 and x ~= x1 then
-                vline(x, ceil + 1, floor, {hue, hue, hue})
+                vline(x, ceil, floor, {hue, hue, hue}, texH)
             end
 
+            texH = texH + stepH
         end
 
         -- Schedule neighboring sector

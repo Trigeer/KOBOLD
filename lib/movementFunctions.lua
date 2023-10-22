@@ -118,14 +118,14 @@ mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, 
     local eyes = 0
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
-    updateVelocity(camera, timeDelta / 0.02, jump, w, s, a, d)
+    updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
     collideHorizontal(sectorArr, camera, eyes)
     collideVertical(
         {
             floor = sectorArr[camera.sector + 1].floor,
             ceil  = sectorArr[camera.sector + 1].ceil
         },
-        camera, timeDelta / 0.02, eyes
+        camera, timeDelta * 60, eyes
     )
 end
 
