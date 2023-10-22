@@ -88,7 +88,7 @@ loader.loadMap = function (path)
         where = {
             x = p.x,
             y = p.y,
-            z = sectorArr[p.sector + 1].floor + EyeHeight
+            z = geo.planeZ(sectorArr[p.sector + 1].floor, 0, 0, p.x, p.y) + EyeHeight
         },
         angle = p.angle,
         sector = p.sector,

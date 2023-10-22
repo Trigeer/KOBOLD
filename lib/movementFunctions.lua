@@ -74,14 +74,14 @@ local function collideHorizontal(sectorArr, camera, eyes)
         if u.uAB > 0 and u.uAB < 1 and u.uCD >= 0 and u.uCD <= 1 and next(sector.neighbor[idx]) ~= nil then
             local target = 0
             for t, n in pairs(sector.neighbor[idx]) do
-                if sectorArr[n + 1].ceil >= camera.where.z + HeadMargin then
+                if sectorArr[n + 1].ceil[1] >= camera.where.z + HeadMargin then
                     target = t
                 else break end
             end
 
             if target > 0 then
-                local holeLow = sectorArr[sector.neighbor[idx][target] + 1].floor
-                local holeTop = sectorArr[sector.neighbor[idx][target] + 1].ceil
+                local holeLow = sectorArr[sector.neighbor[idx][target] + 1].floor[1]
+                local holeTop = sectorArr[sector.neighbor[idx][target] + 1].ceil[1]
 
                 if holeLow <= camera.where.z - eyes + KneeHeight and holeTop - holeLow >= eyes + HeadMargin then
                     camera.sector   = sector.neighbor[idx][target]
@@ -122,8 +122,8 @@ mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, 
     collideHorizontal(sectorArr, camera, eyes)
     collideVertical(
         {
-            floor = sectorArr[camera.sector + 1].floor,
-            ceil  = sectorArr[camera.sector + 1].ceil
+            floor = sectorArr[camera.sector + 1].floor[1],
+            ceil  = sectorArr[camera.sector + 1].ceil[1]
         },
         camera, timeDelta / 0.02, eyes
     )

@@ -43,6 +43,10 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
     local camCos = math.cos(camera.angle)
     local camSin = math.sin(camera.angle)
 
+    -- Save sector's origin
+    local xOrigin = verteces[sector.vertex[1] + 1].x - camera.where.x
+    local zOrigin = verteces[sector.vertex[1] + 1].y - camera.where.y
+
     -- Render each wall
     for s = 1, sector.npoints do
  
@@ -89,14 +93,16 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         if x0 >= x1 or x1 < now.sx0 or x0 > now.sx1 then goto continue end
 
         -- Obtain floor and ceiling heights, relative to camera position
-        local yCeil  = sector.ceil  - camera.where.z
-        local yFloor = sector.floor - camera.where.z
+        local yCeil0  = geo.planeZ(sector.ceil, xOrigin, zOrigin, vx0, vy0)  - camera.where.z
+        local yFloor0 = geo.planeZ(sector.floor, xOrigin, zOrigin, vx0, vy0) - camera.where.z
+        local yCeil1  = geo.planeZ(sector.ceil, xOrigin, zOrigin, vx1, vy1)  - camera.where.z
+        local yFloor1 = geo.planeZ(sector.floor, xOrigin, zOrigin, vx1, vy1) - camera.where.z
 
         -- Project ceiling and floor heights onto screen y-coordinate
-        local yCeil0  = math.floor(ScreenHeight / 2) - math.floor((yCeil  + tz0 * camera.pitch) * yScale0)
-        local yFloor0 = math.floor(ScreenHeight / 2) - math.floor((yFloor + tz0 * camera.pitch) * yScale0)
-        local yCeil1  = math.floor(ScreenHeight / 2) - math.floor((yCeil  + tz1 * camera.pitch) * yScale1)
-        local yFloor1 = math.floor(ScreenHeight / 2) - math.floor((yFloor + tz1 * camera.pitch) * yScale1)
+        yCeil0  = math.floor(ScreenHeight / 2) - math.floor((yCeil0  + tz0 * camera.pitch) * yScale0)
+        yFloor0 = math.floor(ScreenHeight / 2) - math.floor((yFloor0 + tz0 * camera.pitch) * yScale0)
+        yCeil1  = math.floor(ScreenHeight / 2) - math.floor((yCeil1  + tz1 * camera.pitch) * yScale1)
+        yFloor1 = math.floor(ScreenHeight / 2) - math.floor((yFloor1 + tz1 * camera.pitch) * yScale1)
 
         -- Neighbor ceiling and floor
         local neighbor = sector.neighbor[s]
@@ -109,14 +115,16 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
             for idx, n in pairs(neighbor) do
                
                 -- Obtain floor and ceiling heights, relative to camera position
-                local nCeil  = sectors[n + 1].ceil  - camera.where.z
-                local nFloor = sectors[n + 1].floor - camera.where.z
+                local vnCeil0  = geo.planeZ(sectors[n + 1].ceil, xOrigin, zOrigin, vx0, vy0)  - camera.where.z
+                local vnFloor0 = geo.planeZ(sectors[n + 1].floor, xOrigin, zOrigin, vx0, vy0) - camera.where.z
+                local vnCeil1  = geo.planeZ(sectors[n + 1].ceil, xOrigin, zOrigin, vx1, vy1)  - camera.where.z
+                local vnFloor1 = geo.planeZ(sectors[n + 1].floor, xOrigin, zOrigin, vx1, vy1) - camera.where.z
 
                 -- Project ceiling and floor heights onto screen y-coordinate
-                table.insert(nCeil0,  math.floor(ScreenHeight / 2) - math.floor((nCeil  + tz0 * camera.pitch) * yScale0))
-                table.insert(nFloor0, math.floor(ScreenHeight / 2) - math.floor((nFloor + tz0 * camera.pitch) * yScale0))
-                table.insert(nCeil1,  math.floor(ScreenHeight / 2) - math.floor((nCeil  + tz1 * camera.pitch) * yScale1))
-                table.insert(nFloor1, math.floor(ScreenHeight / 2) - math.floor((nFloor + tz1 * camera.pitch) * yScale1))
+                table.insert(nCeil0,  math.floor(ScreenHeight / 2) - math.floor((vnCeil0  + tz0 * camera.pitch) * yScale0))
+                table.insert(nFloor0, math.floor(ScreenHeight / 2) - math.floor((vnFloor0 + tz0 * camera.pitch) * yScale0))
+                table.insert(nCeil1,  math.floor(ScreenHeight / 2) - math.floor((vnCeil1  + tz1 * camera.pitch) * yScale1))
+                table.insert(nFloor1, math.floor(ScreenHeight / 2) - math.floor((vnFloor1 + tz1 * camera.pitch) * yScale1))
 
                 -- Ensure there is enough yTop, yLow tables
                 if idx > 1 then
