@@ -31,29 +31,25 @@ end
 
 -- Bounds indicate floor and ceiling height
 local function collideVertical(bounds, camera, timeDelta, eyes)
-    if not camera.grounded then
-        
-        -- Gravity
-        camera.velocity.z = camera.velocity.z - 0.05 * timeDelta
-        local next = camera.where.z + camera.velocity.z
+    -- Gravity
+    camera.velocity.z = camera.velocity.z - 0.05 * timeDelta
+    local next = camera.where.z + camera.velocity.z
 
-        -- Snap to ground
-        if camera.velocity.z < 0 and next < bounds.floor + eyes then
-            camera.where.z    = bounds.floor + eyes
-            camera.velocity.z = 0
-            camera.grounded   = true
-        -- Ceiling bump
-        elseif camera.velocity.z > 0 and next > bounds.ceil - HeadMargin then
-            camera.where.z    = bounds.ceil - HeadMargin
-            camera.velocity.z = 0
-        else
-            camera.where.z = next
-        end
-        
+    -- Snap to ground
+    if camera.velocity.z < 0 and next < bounds.floor + eyes then
+        camera.where.z    = bounds.floor + eyes
+        camera.velocity.z = 0
+        camera.grounded   = true
+    -- Ceiling bump
+    elseif camera.velocity.z > 0 and next > bounds.ceil - HeadMargin then
+        camera.where.z    = bounds.ceil - HeadMargin
+        camera.velocity.z = 0
+    else
+        camera.where.z = next
     end
 end
 
-local function collideHorizontal(sectorArr, camera, eyes)
+local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
     local xCam = camera.where.x
     local yCam = camera.where.y
     local sector   = sectorArr[camera.sector + 1]
@@ -72,22 +68,43 @@ local function collideHorizontal(sectorArr, camera, eyes)
 
         local u = geo.intercheck(xCam, yCam, xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2)
         if u.uAB > 0 and u.uAB < 1 and u.uCD >= 0 and u.uCD <= 1 and next(sector.neighbor[idx]) ~= nil then
-            local target = 0
+            local intersectionPoint = geo.intersect(u.uCD, x1, y1, x2, y2)
+            local tarCeil = 0
+            local target  = 0
             for t, n in pairs(sector.neighbor[idx]) do
-                if sectorArr[n + 1].ceil[1] >= camera.where.z + HeadMargin then
+                tarCeil = geo.planeZ(
+                    sectorArr[n + 1].ceil,
+                    vertexArr[sectorArr[n + 1].vertex[1] + 1].x,
+                    vertexArr[sectorArr[n + 1].vertex[1] + 1].y,
+                    intersectionPoint.x,
+                    intersectionPoint.y
+                )
+                if tarCeil >= camera.where.z + HeadMargin then
                     target = t
                 else break end
             end
 
             if target > 0 then
-                local holeLow = sectorArr[sector.neighbor[idx][target] + 1].floor[1]
-                local holeTop = sectorArr[sector.neighbor[idx][target] + 1].ceil[1]
+                local holeLow = geo.planeZ(
+                    sectorArr[target + 1].floor,
+                    vertexArr[sectorArr[target + 1].vertex[1] + 1].x,
+                    vertexArr[sectorArr[target + 1].vertex[1] + 1].y,
+                    intersectionPoint.x,
+                    intersectionPoint.y
+                )
+                local holeTop = geo.planeZ(
+                    sectorArr[target + 1].ceil,
+                    vertexArr[sectorArr[target + 1].vertex[1] + 1].x,
+                    vertexArr[sectorArr[target + 1].vertex[1] + 1].y,
+                    intersectionPoint.x,
+                    intersectionPoint.y
+                )
 
                 if holeLow <= camera.where.z - eyes + KneeHeight and holeTop - holeLow >= eyes + HeadMargin then
                     camera.sector   = sector.neighbor[idx][target]
                     camera.grounded = false
                     -- TODO: Reduce recursion
-                    collideHorizontal(sectorArr, camera, eyes)
+                    collideHorizontal(sectorArr, vertexArr, camera, eyes)
                     return
                 end
             end
@@ -114,16 +131,20 @@ mov.moveCamera = function (camera, xDelta, yDelta)
     camera.pitch = geo.clamp(camera.pitch + yDelta * 0.05, -5, 5)
 end
 
-mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, a, d)
+mov.calculateMove = function (sectorArr, vertexArr, camera, timeDelta, jump, crouch, w, s, a, d)
     local eyes = 0
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
+    -- Get origin
+    local xOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1] + 1].x
+    local yOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1] + 1].y
+
     updateVelocity(camera, timeDelta / 0.02, jump, w, s, a, d)
-    collideHorizontal(sectorArr, camera, eyes)
+    collideHorizontal(sectorArr, vertexArr, camera, eyes)
     collideVertical(
         {
-            floor = sectorArr[camera.sector + 1].floor[1],
-            ceil  = sectorArr[camera.sector + 1].ceil[1]
+            floor = geo.planeZ(sectorArr[camera.sector + 1].floor, xOrigin, yOrigin, camera.where.x, camera.where.y),
+            ceil  = geo.planeZ(sectorArr[camera.sector + 1].ceil,  xOrigin, yOrigin, camera.where.x, camera.where.y)
         },
         camera, timeDelta / 0.02, eyes
     )

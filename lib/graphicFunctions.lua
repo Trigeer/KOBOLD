@@ -113,12 +113,16 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         if next(neighbor) ~= nil then
 
             for idx, n in pairs(neighbor) do
+
+                -- Get neighbor's origin
+                local nxOrigin = verteces[sectors[n + 1].vertex[1] + 1].x - camera.where.x
+                local nzOrigin = verteces[sectors[n + 1].vertex[1] + 1].y - camera.where.y
                
                 -- Obtain floor and ceiling heights, relative to camera position
-                local vnCeil0  = geo.planeZ(sectors[n + 1].ceil, xOrigin, zOrigin, vx0, vy0)  - camera.where.z
-                local vnFloor0 = geo.planeZ(sectors[n + 1].floor, xOrigin, zOrigin, vx0, vy0) - camera.where.z
-                local vnCeil1  = geo.planeZ(sectors[n + 1].ceil, xOrigin, zOrigin, vx1, vy1)  - camera.where.z
-                local vnFloor1 = geo.planeZ(sectors[n + 1].floor, xOrigin, zOrigin, vx1, vy1) - camera.where.z
+                local vnCeil0  = geo.planeZ(sectors[n + 1].ceil, nxOrigin, nzOrigin, vx0, vy0)  - camera.where.z
+                local vnFloor0 = geo.planeZ(sectors[n + 1].floor, nxOrigin, nzOrigin, vx0, vy0) - camera.where.z
+                local vnCeil1  = geo.planeZ(sectors[n + 1].ceil, nxOrigin, nzOrigin, vx1, vy1)  - camera.where.z
+                local vnFloor1 = geo.planeZ(sectors[n + 1].floor, nxOrigin, nzOrigin, vx1, vy1) - camera.where.z
 
                 -- Project ceiling and floor heights onto screen y-coordinate
                 table.insert(nCeil0,  math.floor(ScreenHeight / 2) - math.floor((vnCeil0  + tz0 * camera.pitch) * yScale0))
