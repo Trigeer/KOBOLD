@@ -38,27 +38,23 @@ local function drawPixel(x, y, color)
 end
 
 -- A custom line method
-local function vline(x, yTop, yLow, color, texH, shade)
-    texH  = texH or -1 -- Default value
-    shade = shade or 0
+local function vline(x, yTop, yLow, color, texH, shade, boundTop, boundLow)
+    -- Limit the values to valid ranges
+    x = math.abs(x)
+    yTop = geo.clamp(yTop, boundTop, boundLow) + 1
+    yLow = geo.clamp(yLow, boundTop, boundLow) - 1
 
     local texV  = 0
     local stepV = texDim.height / (yLow - yTop)
-    -- TODO: Add clipping offset
-
-    -- Limit the values to valid ranges
-    x = math.abs(x)
-    yTop = yTop + 1
-    yLow = yLow - 1
 
     for y = yTop, yLow do
         if texH == -1 then
             drawPixel(x, y, color)
         else
             local pixel = {texV % texDim.height, texH % texDim.width}
-            local r = math.max(texture:getPixel(pixel[2], pixel[1]) * 255, 0)
-            local g = math.max(texture:getPixel(pixel[2], pixel[1]) * 255, 0)
-            local b = math.max(texture:getPixel(pixel[2], pixel[1]) * 255, 0)
+            local r = math.max(texture:getPixel(pixel[2], pixel[1]) * 255, 0) - shade/2
+            local g = math.max(texture:getPixel(pixel[2], pixel[1]) * 255, 0) - shade/2
+            local b = math.max(texture:getPixel(pixel[2], pixel[1]) * 255, 0) - shade/2
             drawPixel(x, y, {r, g, b})
             texV = texV + stepV
         end
@@ -147,10 +143,8 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
                 table.insert(nFloor1, math.floor(ScreenHeight / 2) - math.floor((nFloor + tz1 * camera.pitch) * yScale1))
 
                 -- Ensure there is enough yTop, yLow tables
-                if idx > 1 then
-                    yTop[idx] = util.shallow(yTop[1])
-                    yLow[idx] = util.shallow(yLow[1])
-                end
+                yTop[idx + 1] = util.shallow(yTop[1])
+                yLow[idx + 1] = util.shallow(yLow[1])
 
             end
 
@@ -173,12 +167,12 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
 
             -- Obtain y-coordinate for ceiling and floor for this x-coordinate, clamp them
             -- TODO: Change to stepped values
-            local ceil  = geo.clamp(math.floor((x - x0) * (yCeil1  - yCeil0)  / (x1 - x0) + yCeil0),  yTop[1][x + 1], yLow[1][x + 1])
-            local floor = geo.clamp(math.floor((x - x0) * (yFloor1 - yFloor0) / (x1 - x0) + yFloor0), yTop[1][x + 1], yLow[1][x + 1])
+            local ceil  = math.floor((x - x0) * (yCeil1  - yCeil0)  / (x1 - x0) + yCeil0)
+            local floor = math.floor((x - x0) * (yFloor1 - yFloor0) / (x1 - x0) + yFloor0)
 
             -- Render ceiling and floor: everything above and below relevent heights
-            vline(x, yTop[1][x + 1], ceil,       {50, 50, 50}) -- Ceiling
-            vline(x, floor,      yLow[1][x + 1], {50, 50, 50}) -- Floor
+            vline(x, yTop[1][x + 1], ceil,       {50, 50, 50}, -1, 0, yTop[1][x + 1], yLow[1][x + 1]) -- Ceiling
+            vline(x, floor,      yLow[1][x + 1], {50, 50, 50}, -1, 0, yTop[1][x + 1], yLow[1][x + 1]) -- Floor
 
             -- Set the color
             local hue = 255 - shader
@@ -187,28 +181,28 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
             if next(neighbor) ~= nil then
                 for idx = 1, #neighbor do
                     -- TODO: change to stepped values
-                    local nceil  = geo.clamp(math.floor((x - x0) * (nCeil1[idx]  - nCeil0[idx])  / (x1 - x0) + nCeil0[idx]),  yTop[idx][x + 1], yLow[idx][x + 1])
-                    local nfloor = geo.clamp(math.floor((x - x0) * (nFloor1[idx] - nFloor0[idx]) / (x1 - x0) + nFloor0[idx]), yTop[idx][x + 1], yLow[idx][x + 1])
+                    local nceil  = math.floor((x - x0) * (nCeil1[idx]  - nCeil0[idx])  / (x1 - x0) + nCeil0[idx])
+                    local nfloor = math.floor((x - x0) * (nFloor1[idx] - nFloor0[idx]) / (x1 - x0) + nFloor0[idx])
 
                     -- Render upper walls
                     if x ~= x0 and x ~= x1 then
-                        vline(x, ceil, nceil, {hue, hue, hue}, texH, shader)
+                        vline(x, ceil, nceil, {hue, hue, hue}, texH, shader, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
                     end
                     
                     -- Shrink the windows
-                    yTop[idx][x + 1] = geo.clamp(math.max(ceil,  nceil),  yTop[idx][x + 1], ScreenHeight)
-                    yLow[idx][x + 1] = geo.clamp(math.min(floor, nfloor), -1,               yLow[idx][x + 1])
+                    yTop[idx + 1][x + 1] = geo.clamp(math.max(ceil,  nceil),  yTop[idx + 1][x + 1], ScreenHeight)
+                    yLow[idx + 1][x + 1] = geo.clamp(math.min(floor, nfloor), -1,               yLow[idx + 1][x + 1])
 
                     ceil = nfloor
                 end
 
                 -- Render lowest wall
                 if x ~= x0 and x ~= x1 then
-                    vline(x, ceil, floor, {hue, hue, hue}, texH, shader)
+                    vline(x, ceil, floor, {hue, hue, hue}, texH, shader, yTop[1][x + 1], yLow[1][x + 1])
                 end
                 
             elseif x ~= x0 and x ~= x1 then
-                vline(x, ceil, floor, {hue, hue, hue}, texH)
+                vline(x, ceil, floor, {hue, hue, hue}, texH, shader, yTop[1][x + 1], yLow[1][x + 1])
             end
 
             texH = texH + stepH
@@ -224,7 +218,7 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
                     sx0 = xBegin,
                     sx1 = xEnd
                 },
-                {yTop[idx]}, {yLow[idx]},
+                {yTop[idx + 1]}, {yLow[idx + 1]},
                 depth - 1
             )
             end
