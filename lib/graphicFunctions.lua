@@ -39,13 +39,17 @@ end
 
 -- A custom line method
 local function vline(x, yTop, yLow, color, texH, shade, boundTop, boundLow)
+    local yTopCopy = yTop
+
+    local texV  = 0
+    local stepV = texDim.height / (yLow - yTop)
+
     -- Limit the values to valid ranges
     x = math.abs(x)
     yTop = geo.clamp(yTop, boundTop, boundLow) + 1
     yLow = geo.clamp(yLow, boundTop, boundLow) - 1
 
-    local texV  = 0
-    local stepV = texDim.height / (yLow - yTop)
+    if yTopCopy < yTop-1 then texV = texV + (stepV * (yTop - yTopCopy)) end
 
     for y = yTop, yLow do
         if texH == -1 then
@@ -83,22 +87,22 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         local tz1 = vx1 * camCos + vy1 * camSin
 
         -- Only render if at least partially in front of the camera
-        if tz0 <= near and tz1 <= near then goto continue end
+        if tz0 < near and tz1 < near then goto continue end
         -- Clip against view frustrum
-        if tz0 <= near or tz1 <= near then
+        if tz0 < near or tz1 < near then
             -- Calculate intersection point
             local inter = geo.intersect(geo.intercheck(
                     tx0, tz0, tx1, tz1,
-                    -20, near,
-                    20, near
+                    -1, near,
+                    1, near
                 ).uAB, tx0, tz0, tx1, tz1
             )
             if tz0 < near then
                 tx0 = inter.x
-                tz0 = inter.y
+                tz0 = near
             elseif tz1 < near then
                 tx1 = inter.x
-                tz1 = inter.y
+                tz1 = near
             end
         end
 
@@ -111,6 +115,8 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         local x1 = ScreenWidth / 2 - math.floor(tx1 * xScale1 + 0.5)
         -- Only render if visible
         if x0 >= x1 or x1 < now.sx0 or x0 > now.sx1 then goto continue end
+
+        -- print(tz0 .. " " .. xScale0 .. " " .. x0)
 
         -- Obtain floor and ceiling heights, relative to camera position
         local yCeil  = sector.ceil  - camera.where.z
@@ -156,8 +162,8 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
 
         -- Calculate texture horizontal values
         local texH  = 0
-        local stepH = texDim.width / (xEnd - xBegin)
-        -- if x0 < xBegin then texH = stepH * (xBegin - x0) end
+        local stepH = texDim.width * 2 / (x1 - x0)
+        if x0 < xBegin then texH = stepH * (xBegin - x0) end
 
         for x = xBegin, xEnd do
             -- Calculate this points z-coordinate for shading
@@ -165,7 +171,7 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
             local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
             local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
 
-            -- Obtain y-coordinate for ceiling and floor for this x-coordinate, clamp them
+            -- Obtain y-coordinate for ceiling and floor for this x-coordinate
             -- TODO: Change to stepped values
             local ceil  = math.floor((x - x0) * (yCeil1  - yCeil0)  / (x1 - x0) + yCeil0)
             local floor = math.floor((x - x0) * (yFloor1 - yFloor0) / (x1 - x0) + yFloor0)
