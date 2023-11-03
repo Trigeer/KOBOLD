@@ -35,20 +35,20 @@ local function drawPixel(x, y, color)
 end
 
 -- A custom line method
-local function vline(x, yTop, yLow, color, shade, boundTop, boundLow)
+local function vline(x, yTop, yLow, color, shade)
     -- Limit the values to valid ranges
     -- x = math.abs(x)
-    yTop = geo.clamp(yTop, boundTop, boundLow) + 1
-    yLow = geo.clamp(yLow, boundTop, boundLow) - 1
+    yTop = geo.clamp(yTop, 0, ScreenHeight - 1) + 1
+    yLow = geo.clamp(yLow, 0, ScreenHeight - 1) - 1
 
     for y = yTop, yLow do
         drawPixel(x, y, color)
     end
 end
 
-local function vline2(x, yTop, yLow, ty, txtx, shade, boundTop, boundLow)
-    yTop = geo.clamp(yTop, boundTop, boundLow) + 1
-    yLow = geo.clamp(yLow, boundTop, boundLow) - 1
+local function vline2(x, yTop, yLow, ty, txtx, shade)
+    yTop = geo.clamp(yTop, 0, ScreenHeight - 1) + 1
+    yLow = geo.clamp(yLow, 0, ScreenHeight - 1) - 1
 
     for y = yTop, yLow do
         local txty = geo.scalerNext(ty)
@@ -133,8 +133,8 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         local yScale0 = (ScreenHeight * Vfov) / tz0
         local xScale1 = (ScreenWidth  * Hfov) / tz1
         local yScale1 = (ScreenHeight * Vfov) / tz1
-        local x0 = ScreenWidth / 2 - math.floor(-tx0 * xScale0)
-        local x1 = ScreenWidth / 2 - math.floor(-tx1 * xScale1)
+        local x0 = ScreenWidth / 2 - math.floor(tx0 * xScale0)
+        local x1 = ScreenWidth / 2 - math.floor(tx1 * xScale1)
         -- Only render if visible
         if x0 >= x1 or x1 < now.sx0 or x0 > now.sx1 then goto continue end
 
@@ -148,12 +148,12 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
 
         -- Project ceiling and floor heights onto screen y-coordinate
         local ceilInt  = geo.scalerInit(x0, xBegin, x1,
-            ScreenHeight / 2 - math.floor(-(yCeil  + tz0 * camera.pitch) * yScale0),
-            ScreenHeight / 2 - math.floor(-(yCeil  + tz1 * camera.pitch) * yScale1)
+            ScreenHeight / 2 - math.floor((yCeil  + tz0 * camera.pitch) * yScale0),
+            ScreenHeight / 2 - math.floor((yCeil  + tz1 * camera.pitch) * yScale1)
         )
         local floorInt = geo.scalerInit(x0, xBegin, x1,
-            ScreenHeight / 2 - math.floor(-(yFloor + tz0 * camera.pitch) * yScale0),
-            ScreenHeight / 2 - math.floor(-(yFloor + tz1 * camera.pitch) * yScale1)
+            ScreenHeight / 2 - math.floor((yFloor + tz0 * camera.pitch) * yScale0),
+            ScreenHeight / 2 - math.floor((yFloor + tz1 * camera.pitch) * yScale1)
         )
 
         -- Neighbor ceiling and floor
@@ -172,15 +172,15 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
                 table.insert(
                     nCeilInt,
                     geo.scalerInit(x0, xBegin, x1,
-                        ScreenHeight / 2 - math.floor(-(nCeil  + tz0 * camera.pitch) * yScale0),
-                        ScreenHeight / 2 - math.floor(-(nCeil  + tz1 * camera.pitch) * yScale1)
+                        ScreenHeight / 2 - math.floor((nCeil  + tz0 * camera.pitch) * yScale0),
+                        ScreenHeight / 2 - math.floor((nCeil  + tz1 * camera.pitch) * yScale1)
                     )
                 )
                 table.insert(
                     nFloorInt,
                     geo.scalerInit(x0, xBegin, x1,
-                        ScreenHeight / 2 - math.floor(-(nFloor + tz0 * camera.pitch) * yScale0),
-                        ScreenHeight / 2 - math.floor(-(nFloor + tz1 * camera.pitch) * yScale1)
+                        ScreenHeight / 2 - math.floor((nFloor + tz0 * camera.pitch) * yScale0),
+                        ScreenHeight / 2 - math.floor((nFloor + tz1 * camera.pitch) * yScale1)
                     )
                 )
 
@@ -203,9 +203,12 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
             local ceil  = geo.scalerNext(ceilInt)
             local floor = geo.scalerNext(floorInt)
 
+            local ceilClamp  = geo.clamp(ceil,  yTop[1][x + 1], yLow[1][x + 1])
+            local floorClamp = geo.clamp(floor, yTop[1][x + 1], yLow[1][x + 1])
+
             -- Render ceiling and floor: everything above and below relevent heights
-            vline(x, yTop[1][x + 1], ceil,       {50, 50, 50}, 0, yTop[1][x + 1], yLow[1][x + 1]) -- Ceiling
-            vline(x, floor,      yLow[1][x + 1], {50, 50, 50}, 0, yTop[1][x + 1], yLow[1][x + 1]) -- Floor
+            vline(x, yTop[1][x + 1], ceil,           {50, 50, 50}, 0) -- Ceiling
+            vline(x, floor,          yLow[1][x + 1], {50, 50, 50}, 0) -- Floor
 
             -- Render wall: depends if portal or not
             if next(neighbor) ~= nil then
@@ -213,25 +216,28 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
                     local nceil  = geo.scalerNext(nCeilInt[idx])
                     local nfloor = geo.scalerNext(nFloorInt[idx])
 
+                    local nceilClamp  = geo.clamp(nceil,  yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
+                    local nfloorClamp = geo.clamp(nfloor, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
+
                     -- Render upper walls
                     if x ~= x0 and x ~= x1 then
-                        vline2(x, ceil, nceil, geo.scalerInit(ceil, nceil, floor, 0, 15), txtx, 0, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
+                        vline2(x, ceilClamp, nceilClamp, geo.scalerInit(ceil, ceilClamp, floor, 0, 15), txtx, 0)
                     end
                     
                     -- Shrink the windows
-                    yTop[idx + 1][x + 1] = geo.clamp(math.max(ceil,  nceil),  yTop[idx + 1][x + 1], ScreenHeight)
-                    yLow[idx + 1][x + 1] = geo.clamp(math.min(floor, nfloor), -1,                   yLow[idx + 1][x + 1])
+                    yTop[idx + 1][x + 1] = geo.clamp(math.max(ceilClamp,  nceilClamp),  yTop[idx + 1][x + 1], ScreenHeight)
+                    yLow[idx + 1][x + 1] = geo.clamp(math.min(floorClamp, nfloorClamp), -1,                   yLow[idx + 1][x + 1])
 
-                    ceil = nfloor
+                    ceilClamp = nfloorClamp
                 end
 
                 -- Render lowest wall
                 if x ~= x0 and x ~= x1 then
-                    vline2(x, ceil, floor, geo.scalerInit(ceil, nceil, floor, 0, 15), txtx, 0, yTop[1][x + 1], yLow[1][x + 1])
+                    vline2(x, ceilClamp, floorClamp, geo.scalerInit(ceil, ceilClamp, floor, 0, 15), txtx, 0)
                 end
                 
             elseif x ~= x0 and x ~= x1 then
-                vline2(x, ceil, floor, geo.scalerInit(ceil, nceil, floor, 0, 15), txtx, 0, yTop[1][x + 1], yLow[1][x + 1])
+                vline2(x, ceilClamp, floorClamp, geo.scalerInit(ceil, ceilClamp, floor, 0, 15), txtx, 0)
             end
         end
 
