@@ -1,11 +1,11 @@
 -- Resolution constants (720x540, scaled 3x up)
 Scaling = 3
-ScreenWidth  = 240
-ScreenHeight = 180
+ScreenWidth  = 204
+ScreenHeight = 160
 
 -- Field of View
-Hfov = 0.73 * ScreenHeight
-Vfov = 0.2  * ScreenHeight
+Hfov = 0.73 * ScreenHeight / ScreenWidth
+Vfov = 0.2
 
 -- Camera constraints
 EyeHeight  = 6
