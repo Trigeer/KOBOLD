@@ -61,7 +61,7 @@ local function collideHorizontal(sectorArr, camera, eyes)
 
     local poi = {x = xCam + camera.velocity.x, y = yCam + camera.velocity.y, sd = math.huge}
 
-    for idx = 1, sector.npoints do
+    for idx = 1, #sector.vertex - 1 do
         local x1 = collider[idx + 0].x
         local y1 = collider[idx + 0].y
         local x2 = collider[idx + 1].x

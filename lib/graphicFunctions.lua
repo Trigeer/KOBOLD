@@ -5,7 +5,9 @@ local util = require("lib.utilities")
 
 local graphics = {}
 
+-- Global constants
 local near = 1e-5
+local shadowIntensity = 0.33
 
 local function drawCenteredText(rectX, rectY, rectWidth, rectHeight, text)
 	local font       = love.graphics.getFont()
@@ -17,9 +19,10 @@ local function drawCenteredText(rectX, rectY, rectWidth, rectHeight, text)
 	love.graphics.print(text, rectX+rectWidth/2, rectY+rectHeight/2, 0, 1, 1, textWidth/2, textHeight/2)
 end
 
-local texture = love.image.newImageData("textures/stone.png")
+local texture = love.image.newImageData("textures/Textures-16.png")
+local textureIndex = {x = 12, y = 10}
 local texDim  = {width = 16, height = 16}
--- local uvMap   = {u = 1, v = 1}
+local uvMap   = {u = 2, v = 2}
 
 -- Draw scaled pixel
 local function drawPixel(x, y, color)
@@ -47,7 +50,7 @@ local function vline(x, yTop, yLow, color, boundTop, boundLow)
     end
 end
 
-local function vline2(x, yTop, yLow, txtx, shade, boundTop, boundLow)
+local function vline2(x, yTop, yLow, tex, txtx, shade, boundTop, boundLow)
     -- Save original values
     local orgTop = yTop
     local orgLow = yLow
@@ -56,29 +59,32 @@ local function vline2(x, yTop, yLow, txtx, shade, boundTop, boundLow)
     yTop = geo.clamp(yTop, boundTop, boundLow) + 1
     yLow = geo.clamp(yLow, boundTop, boundLow) - 1
 
-    local ty = geo.scalerInit(orgTop, yTop, orgLow, 0, 15)
+    local ty = geo.scalerInit(orgTop, yTop, orgLow, 0, (texDim.height * uvMap.v) - 1)
 
     for y = yTop, yLow do
         -- Texture scaling calculations
         local txty = geo.scalerNext(ty)
-        local r, g, b, _ = texture:getPixel(txtx % texDim.width, txty % texDim.height)
+        local r, g, b, _ = texture:getPixel(
+            (textureIndex.x * texDim.width)  + txtx % texDim.width,
+            (textureIndex.y * texDim.height) + txty % texDim.height
+        )
 
         drawPixel(x, y, {
-            math.max(r * 255 - shade / 2, 0),
-            math.max(g * 255 - shade / 2, 0),
-            math.max(b * 255 - shade / 2, 0)
+            math.max(r * 255 - shade * shadowIntensity, 0),
+            math.max(g * 255 - shade * shadowIntensity, 0),
+            math.max(b * 255 - shade * shadowIntensity, 0)
         })
     end
 end
 
-local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
+local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, depth)
     local sector = sectors[now.sector]
 
     local camCos = math.cos(camera.angle)
     local camSin = math.sin(camera.angle)
 
     -- Render each wall
-    for s = 1, sector.npoints do
+    for s = 1, #sector.vertex - 1 do
  
         -- Obtain the coordinates of 2 endpoints of rendered edge
         local vx0 = verteces[sector.vertex[s + 0] + 1].x - camera.where.x
@@ -97,7 +103,7 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
 
         -- Clip to view frustrum
         local u0 = 0
-        local u1 = 15
+        local u1 = (texDim.width * uvMap.u) - 1
 
         if tz0 <= near or tz1 <= near then
             local inter = geo.intersect(geo.intercheck(
@@ -117,12 +123,13 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
                 tz1 = inter.y
             end
 
+            -- u1 is only used for texture width value
             if math.abs(tx1 - tx0) > math.abs(tz1 - tz0) then
-                u0 = (tx0 - org0.x) * 15 / (org1.x - org0.x)
-                u1 = (tx1 - org0.x) * 15 / (org1.x - org0.x)
+                u0 = (tx0 - org0.x) * u1 / (org1.x - org0.x)
+                u1 = (tx1 - org0.x) * u1 / (org1.x - org0.x)
             else
-                u0 = (tz0 - org0.z) * 15 / (org1.z - org0.z)
-                u1 = (tz1 - org0.z) * 15 / (org1.z - org0.z)
+                u0 = (tz0 - org0.z) * u1 / (org1.z - org0.z)
+                u1 = (tz1 - org0.z) * u1 / (org1.z - org0.z)
             end
         end
 
@@ -191,18 +198,15 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
 
         for x = xBegin, xEnd do
             -- Calculate this points z-coordinate for shading
-            -- local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
-            -- local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
-            -- local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
+            local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
+            local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
+            local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
 
             local txtx = (u0 * ((x1 - x) * tz1) + u1 * ((x - x0) * tz0)) / ((x1 - x) * tz1 + (x - x0) * tz0)
 
             -- Obtain y-coordinate for ceiling and floor for this x-coordinate
             local ceil  = geo.scalerNext(ceilInt)
             local floor = geo.scalerNext(floorInt)
-
-            -- local ceilClamp  = geo.clamp(ceil,  yTop[1][x + 1], yLow[1][x + 1])
-            -- local floorClamp = geo.clamp(floor, yTop[1][x + 1], yLow[1][x + 1])
 
             -- Render ceiling and floor: everything above and below relevent heights
             vline(x, yTop[1][x + 1], ceil,           {50, 50, 50}, yTop[1][x + 1], yLow[1][x + 1]) -- Ceiling
@@ -214,12 +218,9 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
                     local nceil  = geo.scalerNext(nCeilInt[idx])
                     local nfloor = geo.scalerNext(nFloorInt[idx])
 
-                    -- local nceilClamp  = geo.clamp(nceil,  yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
-                    -- local nfloorClamp = geo.clamp(nfloor, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
-
                     -- Render upper walls
                     if x ~= x0 and x ~= x1 then
-                        vline2(x, ceil, nceil, txtx, 0, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
+                        vline2(x, ceil, nceil, textures[now.sector][s][idx], txtx, shader, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
                     end
                     
                     -- Shrink the windows
@@ -231,11 +232,11 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
 
                 -- Render lowest wall
                 if x ~= x0 and x ~= x1 then
-                    vline2(x, ceil, floor, txtx, 0, yTop[1][x + 1], yLow[1][x + 1])
+                    vline2(x, ceil, floor, textures[now.sector][s][#neighbor + 1], txtx, shader, yTop[1][x + 1], yLow[1][x + 1])
                 end
                 
             elseif x ~= x0 and x ~= x1 then
-                vline2(x, ceil, floor, txtx, 0, yTop[1][x + 1], yLow[1][x + 1])
+                vline2(x, ceil, floor, textures[now.sector][s][1], txtx, shader, yTop[1][x + 1], yLow[1][x + 1])
             end
         end
 
@@ -260,7 +261,7 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
     
 end
 
-graphics.drawScreen = function (verteces, sectors, camera)
+graphics.drawScreen = function (verteces, sectors, textures, camera)
     -- Prepare screen bounds
     local yTop = {{}}
     local yLow = {{}}
@@ -271,7 +272,7 @@ graphics.drawScreen = function (verteces, sectors, camera)
 
     -- Begin from camera
     drawSector(
-        verteces, sectors, camera,
+        verteces, sectors, textures, camera,
         {
             sector = camera.sector + 1,
             sx0 = 0,

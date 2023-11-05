@@ -7,10 +7,12 @@ local mov = require("lib.movementFunctions")
 
 local vertexArr = {}
 local sectorArr = {}
+local textures  = {}
 local camera = {}
 
 function love.load()
-    local result = lod.loadMap("maps/map0.lua")
+    local result = lod.loadMapGeometry("maps/map0_geometry.lua")
+    textures = lod.loadMapTexturing("maps/map0_texturing.lua")
 
     vertexArr = result[1]
     sectorArr = result[2]
@@ -32,7 +34,7 @@ function love.update(dt)
 end
 
 function love.draw()
-    gpx.drawScreen(vertexArr, sectorArr, camera)
+    gpx.drawScreen(vertexArr, sectorArr, textures, camera)
 end
 
 -- Look around

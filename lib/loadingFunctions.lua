@@ -4,7 +4,7 @@ local geo = require("lib.geometricFunctions")
 
 local loader = {}
 
-loader.loadMap = function (path)
+loader.loadMapGeometry = function (path)
     
     local mapData = love.filesystem.load(path)()
 
@@ -22,16 +22,13 @@ loader.loadMap = function (path)
     for idx = 1, #sectorArr do
         -- Loop the sector
         table.insert(sectorArr[idx].vertex, 1, sectorArr[idx].vertex[#sectorArr[idx].vertex])
-    
-        -- Quick access loop size
-        sectorArr[idx].npoints = #sectorArr[idx].vertex - 1
     end
 
     -- Calculate colliders I
     local offsetArr = {}
     for _, sector in pairs(sectorArr) do
         local tmp = {}
-        for idx = 1, sector.npoints do
+        for idx = 1, #sector.vertex - 1 do
             
             local xOff = vertexArr[sector.vertex[idx + 1] + 1].x - vertexArr[sector.vertex[idx] + 1].x
             local yOff = vertexArr[sector.vertex[idx + 1] + 1].y - vertexArr[sector.vertex[idx] + 1].y
@@ -101,6 +98,12 @@ loader.loadMap = function (path)
 
     return {vertexArr, sectorArr, camera}
 
+end
+
+loader.loadMapTexturing = function (path)
+    local textureData = love.filesystem.load(path)()
+    local texture = love.image.newImageData(textureData.texFile)
+    return {sheet = texture, texDim = textureData.texDim, sector = textureData.sector}
 end
 
 return loader
