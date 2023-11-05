@@ -5,6 +5,8 @@ local util = require("lib.utilities")
 
 local graphics = {}
 
+local near = 1e-5
+
 local function drawCenteredText(rectX, rectY, rectWidth, rectHeight, text)
 	local font       = love.graphics.getFont()
 	local textWidth  = font:getWidth(text)
@@ -35,24 +37,32 @@ local function drawPixel(x, y, color)
 end
 
 -- A custom line method
-local function vline(x, yTop, yLow, color, shade)
+local function vline(x, yTop, yLow, color, boundTop, boundLow)
     -- Limit the values to valid ranges
-    -- x = math.abs(x)
-    yTop = geo.clamp(yTop, 0, ScreenHeight - 1) + 1
-    yLow = geo.clamp(yLow, 0, ScreenHeight - 1) - 1
+    yTop = geo.clamp(yTop, boundTop, boundLow) + 1
+    yLow = geo.clamp(yLow, boundTop, boundLow) - 1
 
     for y = yTop, yLow do
         drawPixel(x, y, color)
     end
 end
 
-local function vline2(x, yTop, yLow, ty, txtx, shade)
-    yTop = geo.clamp(yTop, 0, ScreenHeight - 1) + 1
-    yLow = geo.clamp(yLow, 0, ScreenHeight - 1) - 1
+local function vline2(x, yTop, yLow, txtx, shade, boundTop, boundLow)
+    -- Save original values
+    local orgTop = yTop
+    local orgLow = yLow
+
+    -- Limit the values to valid ranges
+    yTop = geo.clamp(yTop, boundTop, boundLow) + 1
+    yLow = geo.clamp(yLow, boundTop, boundLow) - 1
+
+    local ty = geo.scalerInit(orgTop, yTop, orgLow, 0, 15)
 
     for y = yTop, yLow do
+        -- Texture scaling calculations
         local txty = geo.scalerNext(ty)
         local r, g, b, _ = texture:getPixel(txtx % texDim.width, txty % texDim.height)
+
         drawPixel(x, y, {
             math.max(r * 255 - shade / 2, 0),
             math.max(g * 255 - shade / 2, 0),
@@ -83,48 +93,36 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
         local tz1 = vx1 * camCos + vy1 * camSin
 
         -- Only render if at least partially in front of the camera
-        if tz0 <= 0 and tz1 <= 0 then goto continue end
+        if tz0 <= near and tz1 <= near then goto continue end
 
         -- Clip to view frustrum
         local u0 = 0
         local u1 = 15
 
-        if tz0 <= 0 or tz1 <= 0 then
-            local nearz = 1e-4
-            local farz  = 5
-            local nearside = 1e-5
-            local farside  = 20
+        if tz0 <= near or tz1 <= near then
+            local inter = geo.intersect(geo.intercheck(
+                tx0, tz0, tx1, tz1,
+                -1, near,
+                1, near
+            ).uAB, tx0, tz0, tx1, tz1)
 
-            local inter0 = geo.intersect(geo.intercheck(tx0, tz0, tx1, tz1, -nearside, nearz, -farside, farz).uAB, tx0, tz0, tx1, tz1)
-            local inter1 = geo.intersect(geo.intercheck(tx0, tz0, tx1, tz1,  nearside, nearz,  farside, farz).uAB, tx0, tz0, tx1, tz1)
+            local org0 = {x = tx0, z = tz0}
+            local org1 = {x = tx1, z = tz1}
 
-            local original0 = {x = tx0, z = tz0}
-            local original1 = {x = tx1, z = tz1}
-
-            if tz0 < nearz then
-                if inter0.y > 0 then
-                    tx0 = inter0.x
-                    tz0 = inter0.y
-                else
-                    tx0 = inter1.x
-                    tz0 = inter1.y
-                end
-            else
-                if inter0.y > 0 then
-                    tx1 = inter0.x
-                    tz1 = inter0.y
-                else
-                    tx1 = inter1.x
-                    tz1 = inter1.y
-                end
+            if tz0 < near then
+                tx0 = inter.x
+                tz0 = inter.y
+            elseif tz1 < near then
+                tx1 = inter.x
+                tz1 = inter.y
             end
 
             if math.abs(tx1 - tx0) > math.abs(tz1 - tz0) then
-                u0 = (tx0 - original0.x) * 15 / (original1.x - original0.x)
-                u1 = (tx1 - original0.x) * 15 / (original1.x - original0.x)
+                u0 = (tx0 - org0.x) * 15 / (org1.x - org0.x)
+                u1 = (tx1 - org0.x) * 15 / (org1.x - org0.x)
             else
-                u0 = (tz0 - original0.z) * 15 / (original1.z - original0.z)
-                u1 = (tz1 - original0.z) * 15 / (original1.z - original0.z)
+                u0 = (tz0 - org0.z) * 15 / (org1.z - org0.z)
+                u1 = (tz1 - org0.z) * 15 / (org1.z - org0.z)
             end
         end
 
@@ -203,12 +201,12 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
             local ceil  = geo.scalerNext(ceilInt)
             local floor = geo.scalerNext(floorInt)
 
-            local ceilClamp  = geo.clamp(ceil,  yTop[1][x + 1], yLow[1][x + 1])
-            local floorClamp = geo.clamp(floor, yTop[1][x + 1], yLow[1][x + 1])
+            -- local ceilClamp  = geo.clamp(ceil,  yTop[1][x + 1], yLow[1][x + 1])
+            -- local floorClamp = geo.clamp(floor, yTop[1][x + 1], yLow[1][x + 1])
 
             -- Render ceiling and floor: everything above and below relevent heights
-            vline(x, yTop[1][x + 1], ceil,           {50, 50, 50}, 0) -- Ceiling
-            vline(x, floor,          yLow[1][x + 1], {50, 50, 50}, 0) -- Floor
+            vline(x, yTop[1][x + 1], ceil,           {50, 50, 50}, yTop[1][x + 1], yLow[1][x + 1]) -- Ceiling
+            vline(x, floor,          yLow[1][x + 1], {50, 50, 50}, yTop[1][x + 1], yLow[1][x + 1]) -- Floor
 
             -- Render wall: depends if portal or not
             if next(neighbor) ~= nil then
@@ -216,28 +214,28 @@ local function drawSector(verteces, sectors, camera, now, yTop, yLow, depth)
                     local nceil  = geo.scalerNext(nCeilInt[idx])
                     local nfloor = geo.scalerNext(nFloorInt[idx])
 
-                    local nceilClamp  = geo.clamp(nceil,  yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
-                    local nfloorClamp = geo.clamp(nfloor, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
+                    -- local nceilClamp  = geo.clamp(nceil,  yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
+                    -- local nfloorClamp = geo.clamp(nfloor, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
 
                     -- Render upper walls
                     if x ~= x0 and x ~= x1 then
-                        vline2(x, ceilClamp, nceilClamp, geo.scalerInit(ceil, ceilClamp, floor, 0, 15), txtx, 0)
+                        vline2(x, ceil, nceil, txtx, 0, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
                     end
                     
                     -- Shrink the windows
-                    yTop[idx + 1][x + 1] = geo.clamp(math.max(ceilClamp,  nceilClamp),  yTop[idx + 1][x + 1], ScreenHeight)
-                    yLow[idx + 1][x + 1] = geo.clamp(math.min(floorClamp, nfloorClamp), -1,                   yLow[idx + 1][x + 1])
+                    yTop[idx + 1][x + 1] = geo.clamp(math.max(ceil,  nceil),  yTop[idx + 1][x + 1], ScreenHeight)
+                    yLow[idx + 1][x + 1] = geo.clamp(math.min(floor, nfloor), -1,                   yLow[idx + 1][x + 1])
 
-                    ceilClamp = nfloorClamp
+                    ceil = nfloor
                 end
 
                 -- Render lowest wall
                 if x ~= x0 and x ~= x1 then
-                    vline2(x, ceilClamp, floorClamp, geo.scalerInit(ceil, ceilClamp, floor, 0, 15), txtx, 0)
+                    vline2(x, ceil, floor, txtx, 0, yTop[1][x + 1], yLow[1][x + 1])
                 end
                 
             elseif x ~= x0 and x ~= x1 then
-                vline2(x, ceilClamp, floorClamp, geo.scalerInit(ceil, ceilClamp, floor, 0, 15), txtx, 0)
+                vline2(x, ceil, floor, txtx, 0, yTop[1][x + 1], yLow[1][x + 1])
             end
         end
 
