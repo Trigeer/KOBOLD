@@ -14,4 +14,27 @@ function utils.shallow(orig)
     return copy
 end
 
+-- Scaler -> {result, bop, fd, ca, cache}
+utils.scalerInit = function (a, b, c, d, f)
+    local bop = 1
+    if ((f < d) or (c < a)) and not ((f < d) and (c < a)) then
+        bop = -1
+    end
+    return {
+        result = d + (b - 1 - a) * (f - d) / (c - a),
+        bop = bop,
+        fd = math.abs(f - d),
+        ca = math.abs(c - a),
+        cache = ((b - 1 - a) * math.abs(f - d)) % math.abs(c - a)
+    }
+end
+utils.scalerNext = function (scaler)
+    scaler.cache = scaler.cache + scaler.fd
+    while scaler.cache >= scaler.ca do
+        scaler.result = scaler.result + scaler.bop
+        scaler.cache = scaler.cache - scaler.ca
+    end
+    return scaler.result
+end
+
 return utils

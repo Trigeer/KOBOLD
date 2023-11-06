@@ -5,10 +5,6 @@ local util = require("lib.utilities")
 
 local graphics = {}
 
--- Global constants
-local near = 1e-5
-local shadowIntensity = 0.33
-
 local function drawCenteredText(rectX, rectY, rectWidth, rectHeight, text)
 	local font       = love.graphics.getFont()
 	local textWidth  = font:getWidth(text)
@@ -50,6 +46,7 @@ local function vline(x, yTop, yLow, color, boundTop, boundLow)
     end
 end
 
+-- Textured vertical line
 local function vline2(x, yTop, yLow, tex, txtx, shade, boundTop, boundLow)
     -- Save original values
     local orgTop = yTop
@@ -59,20 +56,20 @@ local function vline2(x, yTop, yLow, tex, txtx, shade, boundTop, boundLow)
     yTop = geo.clamp(yTop, boundTop, boundLow) + 1
     yLow = geo.clamp(yLow, boundTop, boundLow) - 1
 
-    local ty = geo.scalerInit(orgTop, yTop, orgLow, 0, (texDim.height * uvMap.v) - 1)
+    local ty = util.scalerInit(orgTop, yTop, orgLow, 0, (texDim.height * uvMap.v) - 1)
 
     for y = yTop, yLow do
         -- Texture scaling calculations
-        local txty = geo.scalerNext(ty)
+        local txty = util.scalerNext(ty)
         local r, g, b, _ = texture:getPixel(
             (textureIndex.x * texDim.width)  + txtx % texDim.width,
             (textureIndex.y * texDim.height) + txty % texDim.height
         )
 
         drawPixel(x, y, {
-            math.max(r * 255 - shade * shadowIntensity, 0),
-            math.max(g * 255 - shade * shadowIntensity, 0),
-            math.max(b * 255 - shade * shadowIntensity, 0)
+            math.max(r * 255 - shade * ShadowIntensity, 0),
+            math.max(g * 255 - shade * ShadowIntensity, 0),
+            math.max(b * 255 - shade * ShadowIntensity, 0)
         })
     end
 end
@@ -99,26 +96,26 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
         local tz1 = vx1 * camCos + vy1 * camSin
 
         -- Only render if at least partially in front of the camera
-        if tz0 <= near and tz1 <= near then goto continue end
+        if tz0 <= Near and tz1 <= Near then goto continue end
 
         -- Clip to view frustrum
         local u0 = 0
         local u1 = (texDim.width * uvMap.u) - 1
 
-        if tz0 <= near or tz1 <= near then
+        if tz0 <= Near or tz1 <= Near then
             local inter = geo.intersect(geo.intercheck(
                 tx0, tz0, tx1, tz1,
-                -1, near,
-                1, near
+                -1, Near,
+                1, Near
             ).uAB, tx0, tz0, tx1, tz1)
 
             local org0 = {x = tx0, z = tz0}
             local org1 = {x = tx1, z = tz1}
 
-            if tz0 < near then
+            if tz0 < Near then
                 tx0 = inter.x
                 tz0 = inter.y
-            elseif tz1 < near then
+            elseif tz1 < Near then
                 tx1 = inter.x
                 tz1 = inter.y
             end
@@ -152,11 +149,11 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
         local yFloor = sector.floor - camera.where.z
 
         -- Project ceiling and floor heights onto screen y-coordinate
-        local ceilInt  = geo.scalerInit(x0, xBegin, x1,
+        local ceilInt  = util.scalerInit(x0, xBegin, x1,
             ScreenHeight / 2 - math.floor((yCeil  + tz0 * camera.pitch) * yScale0),
             ScreenHeight / 2 - math.floor((yCeil  + tz1 * camera.pitch) * yScale1)
         )
-        local floorInt = geo.scalerInit(x0, xBegin, x1,
+        local floorInt = util.scalerInit(x0, xBegin, x1,
             ScreenHeight / 2 - math.floor((yFloor + tz0 * camera.pitch) * yScale0),
             ScreenHeight / 2 - math.floor((yFloor + tz1 * camera.pitch) * yScale1)
         )
@@ -176,14 +173,14 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
                 -- Project ceiling and floor heights onto screen y-coordinate
                 table.insert(
                     nCeilInt,
-                    geo.scalerInit(x0, xBegin, x1,
+                    util.scalerInit(x0, xBegin, x1,
                         ScreenHeight / 2 - math.floor((nCeil  + tz0 * camera.pitch) * yScale0),
                         ScreenHeight / 2 - math.floor((nCeil  + tz1 * camera.pitch) * yScale1)
                     )
                 )
                 table.insert(
                     nFloorInt,
-                    geo.scalerInit(x0, xBegin, x1,
+                    util.scalerInit(x0, xBegin, x1,
                         ScreenHeight / 2 - math.floor((nFloor + tz0 * camera.pitch) * yScale0),
                         ScreenHeight / 2 - math.floor((nFloor + tz1 * camera.pitch) * yScale1)
                     )
@@ -205,8 +202,8 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
             local txtx = (u0 * ((x1 - x) * tz1) + u1 * ((x - x0) * tz0)) / ((x1 - x) * tz1 + (x - x0) * tz0)
 
             -- Obtain y-coordinate for ceiling and floor for this x-coordinate
-            local ceil  = geo.scalerNext(ceilInt)
-            local floor = geo.scalerNext(floorInt)
+            local ceil  = util.scalerNext(ceilInt)
+            local floor = util.scalerNext(floorInt)
 
             -- Render ceiling and floor: everything above and below relevent heights
             vline(x, yTop[1][x + 1], ceil,           {50, 50, 50}, yTop[1][x + 1], yLow[1][x + 1]) -- Ceiling
@@ -215,8 +212,8 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
             -- Render wall: depends if portal or not
             if next(neighbor) ~= nil then
                 for idx = 1, #neighbor do
-                    local nceil  = geo.scalerNext(nCeilInt[idx])
-                    local nfloor = geo.scalerNext(nFloorInt[idx])
+                    local nceil  = util.scalerNext(nCeilInt[idx])
+                    local nfloor = util.scalerNext(nFloorInt[idx])
 
                     -- Render upper walls
                     if x ~= x0 and x ~= x1 then

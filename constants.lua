@@ -1,7 +1,12 @@
--- Resolution constants (720x540, scaled 3x up)
+-- Resolution constants (612x480, scaled 3x up)
 Scaling = 3
 ScreenWidth  = 204
 ScreenHeight = 160
+
+-- Rendering constants
+-- Global constants
+Near = 1e-5
+ShadowIntensity = 0.33
 
 -- Field of View
 Hfov = 0.73 * ScreenHeight / ScreenWidth
