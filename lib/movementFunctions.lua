@@ -61,7 +61,7 @@ local function collideHorizontal(sectorArr, camera, eyes)
 
     local poi = {x = xCam + camera.velocity.x, y = yCam + camera.velocity.y, sd = math.huge}
 
-    for idx = 1, sector.npoints do
+    for idx = 1, #sector.vertex - 1 do
         local x1 = collider[idx + 0].x
         local y1 = collider[idx + 0].y
         local x2 = collider[idx + 1].x
@@ -118,14 +118,14 @@ mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, 
     local eyes = 0
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
-    updateVelocity(camera, timeDelta / 0.02, jump, w, s, a, d)
+    updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
     collideHorizontal(sectorArr, camera, eyes)
     collideVertical(
         {
             floor = sectorArr[camera.sector + 1].floor,
             ceil  = sectorArr[camera.sector + 1].ceil
         },
-        camera, timeDelta / 0.02, eyes
+        camera, timeDelta * 60, eyes
     )
 end
 

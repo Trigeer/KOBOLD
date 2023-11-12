@@ -18,13 +18,13 @@ local map0 = {
       {floor = 0,  ceil = 20, vertex = {17, 15, 14, 3, 9},           neighbor = {{}, {12}, {11}, {0}, {21}}},
       {floor = 0,  ceil = 20, vertex = {41, 42, 43, 44, 50, 49, 40}, neighbor = {{}, {20}, {}, {3}, {}, {}, {22}}},
       {floor = 0,  ceil = 14, vertex = {12, 13, 44, 43, 35, 20},     neighbor = {{}, {21}, {}, {2}, {}, {25, 4}}},
-      {floor = 0,  ceil = 5,  vertex = {16, 20, 35, 31},             neighbor = {{}, {}, {3}, {}}}, -- under star
+      {floor = 0,  ceil = 5,  vertex = {16, 20, 35, 31},             neighbor = {{}, {}, {3}, {}}},
       {floor = 16, ceil = 28, vertex = {24, 8, 2, 53, 48, 39},       neighbor = {{18}, {}, {7}, {}, {6}, {}}},
       {floor = 16, ceil = 28, vertex = {53, 52, 46, 47, 48},         neighbor = {{5}, {}, {8}, {10}, {}}},
       {floor = 16, ceil = 28, vertex = {1, 2, 8, 7, 6},              neighbor = {{23}, {}, {5}, {}, {10}}},
       {floor = 16, ceil = 36, vertex = {46, 52, 51, 45},             neighbor = {{}, {6}, {}, {24}}},
       {floor = 16, ceil = 36, vertex = {25, 26, 28, 27},             neighbor = {{24}, {}, {10}, {}}},
-      {floor = 16, ceil = 26, vertex = {6, 7, 47, 46, 28, 26},       neighbor = {{}, {7}, {}, {6}, {}, {9}}}, -- target
+      {floor = 16, ceil = 26, vertex = {6, 7, 47, 46, 28, 26},       neighbor = {{}, {7}, {}, {6}, {}, {9}}},
       {floor = 2,  ceil = 20, vertex = {14, 15, 30, 29},             neighbor = {{0}, {1}, {12}, {22}}},
       {floor = 4,  ceil = 20, vertex = {15, 17, 32, 30},             neighbor = {{11}, {1}, {13}, {22}}},
       {floor = 6,  ceil = 20, vertex = {17, 18, 33, 32},             neighbor = {{12}, {}, {14}, {}}},
