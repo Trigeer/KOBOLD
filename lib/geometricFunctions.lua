@@ -43,4 +43,11 @@ geo.intersect = function (uValue, Ax, Ay, Bx, By)
     }
 end
 
+geo.planeZ = function (plane, xRef, yRef, xTar, yTar)
+    local xDelta = (xTar - xRef) * math.tan(plane[2])
+    local yDelta = (yTar - yRef) * math.tan(plane[3])
+
+    return plane[1] + xDelta + yDelta
+end
+
 return geo
