@@ -15,10 +15,10 @@ local function drawCenteredText(rectX, rectY, rectWidth, rectHeight, text)
 	love.graphics.print(text, rectX+rectWidth/2, rectY+rectHeight/2, 0, 1, 1, textWidth/2, textHeight/2)
 end
 
-local texture = love.image.newImageData("textures/Textures-16.png")
-local textureIndex = {x = 12, y = 10}
-local texDim  = {width = 16, height = 16}
-local uvMap   = {u = 2, v = 2}
+-- local texture = love.image.newImageData("textures/Textures-16.png")
+-- local textureIndex = {x = 12, y = 10}
+-- local texDim  = {width = 16, height = 16}
+-- local uvMap   = {u = 2, v = 2}
 
 -- Draw scaled pixel
 local function drawPixel(x, y, color)
@@ -53,17 +53,18 @@ local function vline2(x, yTop, yLow, tex, txtx, shade, boundTop, boundLow)
     local orgLow = yLow
 
     -- Limit the values to valid ranges
+    -- x = math.abs(x)
     yTop = geo.clamp(yTop, boundTop, boundLow) + 1
     yLow = geo.clamp(yLow, boundTop, boundLow) - 1
 
-    local ty = util.scalerInit(orgTop, yTop, orgLow, 0, (texDim.height * uvMap.v) - 1)
+    local ty = util.scalerInit(orgTop, yTop, orgLow, 0, tex.dim.height - 1)
 
     for y = yTop, yLow do
         -- Texture scaling calculations
         local txty = util.scalerNext(ty)
-        local r, g, b, _ = texture:getPixel(
-            (textureIndex.x * texDim.width)  + txtx % texDim.width,
-            (textureIndex.y * texDim.height) + txty % texDim.height
+        local r, g, b, _ = tex.sheet:getPixel(
+            (tex.cords.i * tex.dim.width)  + (txtx * tex.cords.u) % tex.dim.width,
+            (tex.cords.j * tex.dim.height) + (txty * tex.cords.v) % tex.dim.height
         )
 
         drawPixel(x, y, {
@@ -100,7 +101,7 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
 
         -- Clip to view frustrum
         local u0 = 0
-        local u1 = (texDim.width * uvMap.u) - 1
+        local u1 = textures.texDim.width - 1
 
         if tz0 <= Near or tz1 <= Near then
             local inter = geo.intersect(geo.intercheck(
@@ -217,7 +218,15 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
 
                     -- Render upper walls
                     if x ~= x0 and x ~= x1 then
-                        vline2(x, ceil, nceil, textures[now.sector][s][idx], txtx, shader, yTop[idx + 1][x + 1], yLow[idx + 1][x + 1])
+                        vline2(x, ceil, nceil,
+                            {
+                                sheet = textures.sheet,
+                                dim = textures.texDim,
+                                cords = textures.sector[now.sector][s][idx]
+                            },
+                            txtx, shader,
+                            yTop[idx + 1][x + 1], yLow[idx + 1][x + 1]
+                        )
                     end
                     
                     -- Shrink the windows
@@ -229,11 +238,27 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
 
                 -- Render lowest wall
                 if x ~= x0 and x ~= x1 then
-                    vline2(x, ceil, floor, textures[now.sector][s][#neighbor + 1], txtx, shader, yTop[1][x + 1], yLow[1][x + 1])
+                    vline2(x, ceil, floor,
+                        {
+                            sheet = textures.sheet,
+                            dim = textures.texDim,
+                            cords = textures.sector[now.sector][s][#neighbor + 1]
+                        },
+                        txtx, shader,
+                        yTop[1][x + 1], yLow[1][x + 1]
+                    )
                 end
                 
             elseif x ~= x0 and x ~= x1 then
-                vline2(x, ceil, floor, textures[now.sector][s][1], txtx, shader, yTop[1][x + 1], yLow[1][x + 1])
+                vline2(x, ceil, floor,
+                    {
+                        sheet = textures.sheet,
+                        dim = textures.texDim,
+                        cords = textures.sector[now.sector][s][1]
+                    },
+                    txtx, shader,
+                    yTop[1][x + 1], yLow[1][x + 1]
+                )
             end
         end
 
@@ -241,7 +266,7 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
         if next(neighbor) ~= nil and xEnd > xBegin and depth >= 0 then
             for idx = 1, #neighbor do
                 drawSector(
-                verteces, sectors, camera,
+                verteces, sectors, textures, camera,
                 {
                     sector = neighbor[idx] + 1,
                     sx0 = xBegin,
@@ -279,7 +304,7 @@ graphics.drawScreen = function (verteces, sectors, textures, camera)
         RenderDepth
     )
 
-    drawCenteredText(680, 10, 30, 25, camera.sector)
+    drawCenteredText(540, 10, 30, 25, camera.sector)
 end
 
 return graphics
