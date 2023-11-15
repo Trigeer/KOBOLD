@@ -78,6 +78,20 @@ loader.loadMapGeometry = function (path)
         table.insert(tmp, tmp[1])
         sectorArr[sect].collisions = tmp
     end
+
+    -- Calculate collider III
+    for sect, sector in pairs(sectorArr) do
+        for idx = 1, #sector.collisions - 1 do
+            local xOff = sector.collisions[idx + 1].x - sector.collisions[idx].x
+            local yOff = sector.collisions[idx + 1].y - sector.collisions[idx].y
+            local wallLen = math.sqrt(xOff^2 + yOff^2)
+
+            if wallLen == 0 then wallLen = 0.00001 end
+            
+            sectorArr[sect].collisions[idx].dx =  yOff / wallLen
+            sectorArr[sect].collisions[idx].dy = -xOff / wallLen
+        end
+    end
     
     -- Initialize the player data
     local p = mapData.player

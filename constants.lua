@@ -3,6 +3,8 @@ Scaling = 3
 ScreenWidth  = 204
 ScreenHeight = 160
 
+WallOffset = 0.25
+
 -- Rendering constants
 -- Global constants
 Near = 1e-5

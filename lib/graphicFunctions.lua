@@ -58,6 +58,11 @@ local function vline2(x, yTop, yLow, texBoundTop, texBoundLow, tex, txtx, shade,
             (tex.cords.j * tex.dim.height) + (txty * tex.cords.v) % tex.dim.height
         )
 
+        -- For ease of testing textures have been turned off
+        r = 0.5
+        g = 0.5
+        b = 0.5
+
         drawPixel(x, y, {
             math.max(r * 255 - shade * ShadowIntensity, 0),
             math.max(g * 255 - shade * ShadowIntensity, 0),
