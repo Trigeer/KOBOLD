@@ -15,11 +15,6 @@ local function drawCenteredText(rectX, rectY, rectWidth, rectHeight, text)
 	love.graphics.print(text, rectX+rectWidth/2, rectY+rectHeight/2, 0, 1, 1, textWidth/2, textHeight/2)
 end
 
--- local texture = love.image.newImageData("textures/Textures-16.png")
--- local textureIndex = {x = 12, y = 10}
--- local texDim  = {width = 16, height = 16}
--- local uvMap   = {u = 2, v = 2}
-
 -- Draw scaled pixel
 local function drawPixel(x, y, color)
     local red   = color[1] / 255
@@ -47,22 +42,18 @@ local function vline(x, yTop, yLow, color, boundTop, boundLow)
 end
 
 -- Textured vertical line
-local function vline2(x, yTop, yLow, tex, txtx, shade, boundTop, boundLow)
-    -- Save original values
-    local orgTop = yTop
-    local orgLow = yLow
-
+local function vline2(x, yTop, yLow, texBoundTop, texBoundLow, tex, txtx, shade, boundTop, boundLow)
     -- Limit the values to valid ranges
-    -- x = math.abs(x)
     yTop = geo.clamp(yTop, boundTop, boundLow) + 1
     yLow = geo.clamp(yLow, boundTop, boundLow) - 1
 
-    local ty = util.scalerInit(orgTop, yTop, orgLow, 0, tex.dim.height - 1)
+    local ty = util.scalerInit(texBoundTop, yTop, texBoundLow, 0, tex.dim.height - 1)
 
     for y = yTop, yLow do
         -- Texture scaling calculations
         local txty = util.scalerNext(ty)
         local r, g, b, _ = tex.sheet:getPixel(
+            -- TODO: Fix UV mapping
             (tex.cords.i * tex.dim.width)  + (txtx * tex.cords.u) % tex.dim.width,
             (tex.cords.j * tex.dim.height) + (txty * tex.cords.v) % tex.dim.height
         )
@@ -150,13 +141,16 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
         local xEnd   = math.min(x1, now.sx1)
 
         -- Obtain floor and ceiling heights, relative to camera position
-        local yCeil0  = geo.planeZ(sector.ceil, xOrigin, zOrigin, vx0, vy0)  - camera.where.z
+        local yCeil0  = geo.planeZ(sector.ceil,  xOrigin, zOrigin, vx0, vy0) - camera.where.z
         local yFloor0 = geo.planeZ(sector.floor, xOrigin, zOrigin, vx0, vy0) - camera.where.z
-        local yCeil1  = geo.planeZ(sector.ceil, xOrigin, zOrigin, vx1, vy1)  - camera.where.z
+        local yCeil1  = geo.planeZ(sector.ceil,  xOrigin, zOrigin, vx1, vy1) - camera.where.z
         local yFloor1 = geo.planeZ(sector.floor, xOrigin, zOrigin, vx1, vy1) - camera.where.z
 
+        -- Choose texture bounds
+        local tyCeil  = math.max(yCeil0,  yCeil1)
+        local tyFloor = math.min(yFloor0, yFloor1)
+
         -- Project ceiling and floor heights onto screen y-coordinate
--- <<<<<<< HEAD
         local ceilInt  = util.scalerInit(x0, xBegin, x1,
             ScreenHeight / 2 - math.floor((yCeil0 + tz0 * camera.pitch) * yScale0),
             ScreenHeight / 2 - math.floor((yCeil1 + tz1 * camera.pitch) * yScale1)
@@ -165,17 +159,21 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
             ScreenHeight / 2 - math.floor((yFloor0 + tz0 * camera.pitch) * yScale0),
             ScreenHeight / 2 - math.floor((yFloor1 + tz1 * camera.pitch) * yScale1)
         )
--- =======
---         yCeil0  = math.floor(ScreenHeight / 2) - math.floor((yCeil0  + tz0 * camera.pitch) * yScale0)
---         yFloor0 = math.floor(ScreenHeight / 2) - math.floor((yFloor0 + tz0 * camera.pitch) * yScale0)
---         yCeil1  = math.floor(ScreenHeight / 2) - math.floor((yCeil1  + tz1 * camera.pitch) * yScale1)
---         yFloor1 = math.floor(ScreenHeight / 2) - math.floor((yFloor1 + tz1 * camera.pitch) * yScale1)
--- >>>>>>> Feature-5-Crooked
+        local texCeilInt = util.scalerInit(x0, xBegin, x1,
+            ScreenHeight / 2 - math.floor((tyCeil + tz0 * camera.pitch) * yScale0),
+            ScreenHeight / 2 - math.floor((tyCeil + tz1 * camera.pitch) * yScale1)
+        )
+        local texFloorInt = util.scalerInit(x0, xBegin, x1,
+            ScreenHeight / 2 - math.floor((tyFloor + tz0 * camera.pitch) * yScale0),
+            ScreenHeight / 2 - math.floor((tyFloor + tz1 * camera.pitch) * yScale1)
+        )
 
         -- Neighbor ceiling and floor
-        local neighbor = sector.neighbor[s]
-        local nCeilInt  = {}
-        local nFloorInt = {}
+        local neighbor     = sector.neighbor[s]
+        local nCeilInt     = {}
+        local nFloorInt    = {}
+        local nTexCeilInt  = {}
+        local nTexFloorInt = {}
         if next(neighbor) ~= nil then
 
             for idx, n in pairs(neighbor) do
@@ -185,13 +183,16 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
                 local nzOrigin = verteces[sectors[n + 1].vertex[1] + 1].y - camera.where.y
                
                 -- Obtain floor and ceiling heights, relative to camera position
-                local vnCeil0  = geo.planeZ(sectors[n + 1].ceil, nxOrigin, nzOrigin, vx0, vy0)  - camera.where.z
+                local vnCeil0  = geo.planeZ(sectors[n + 1].ceil,  nxOrigin, nzOrigin, vx0, vy0) - camera.where.z
                 local vnFloor0 = geo.planeZ(sectors[n + 1].floor, nxOrigin, nzOrigin, vx0, vy0) - camera.where.z
-                local vnCeil1  = geo.planeZ(sectors[n + 1].ceil, nxOrigin, nzOrigin, vx1, vy1)  - camera.where.z
+                local vnCeil1  = geo.planeZ(sectors[n + 1].ceil,  nxOrigin, nzOrigin, vx1, vy1) - camera.where.z
                 local vnFloor1 = geo.planeZ(sectors[n + 1].floor, nxOrigin, nzOrigin, vx1, vy1) - camera.where.z
 
+                -- Choose texture bounds
+                local tvnCeil  = math.min(vnCeil0,  vnCeil1)
+                local tvnFloor = math.max(vnFloor0, vnFloor1)
+
                 -- Project ceiling and floor heights onto screen y-coordinate
--- <<<<<<< HEAD
                 table.insert(
                     nCeilInt,
                     util.scalerInit(x0, xBegin, x1,
@@ -206,12 +207,20 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
                         ScreenHeight / 2 - math.floor((vnFloor1 + tz1 * camera.pitch) * yScale1)
                     )
                 )
--- =======
---                 table.insert(nCeil0,  math.floor(ScreenHeight / 2) - math.floor((vnCeil0  + tz0 * camera.pitch) * yScale0))
---                 table.insert(nFloor0, math.floor(ScreenHeight / 2) - math.floor((vnFloor0 + tz0 * camera.pitch) * yScale0))
---                 table.insert(nCeil1,  math.floor(ScreenHeight / 2) - math.floor((vnCeil1  + tz1 * camera.pitch) * yScale1))
---                 table.insert(nFloor1, math.floor(ScreenHeight / 2) - math.floor((vnFloor1 + tz1 * camera.pitch) * yScale1))
--- >>>>>>> Feature-5-Crooked
+                table.insert(
+                    nTexCeilInt,
+                    util.scalerInit(x0, xBegin, x1,
+                        ScreenHeight / 2 - math.floor((tvnCeil + tz0 * camera.pitch) * yScale0),
+                        ScreenHeight / 2 - math.floor((tvnCeil + tz1 * camera.pitch) * yScale1)
+                    )
+                )
+                table.insert(
+                    nTexFloorInt,
+                    util.scalerInit(x0, xBegin, x1,
+                        ScreenHeight / 2 - math.floor((tvnFloor + tz0 * camera.pitch) * yScale0),
+                        ScreenHeight / 2 - math.floor((tvnFloor + tz1 * camera.pitch) * yScale1)
+                    )
+                )
 
                 -- Ensure there is enough yTop, yLow tables
                 yTop[idx + 1] = util.shallow(yTop[1])
@@ -231,6 +240,7 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
             -- Obtain y-coordinate for ceiling and floor for this x-coordinate
             local ceil  = util.scalerNext(ceilInt)
             local floor = util.scalerNext(floorInt)
+            local tex   = util.scalerNext(texCeilInt)
 
             -- Render ceiling and floor: everything above and below relevent heights
             vline(x, yTop[1][x + 1], ceil,           {50, 50, 50}, yTop[1][x + 1], yLow[1][x + 1]) -- Ceiling
@@ -241,10 +251,12 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
                 for idx = 1, #neighbor do
                     local nceil  = util.scalerNext(nCeilInt[idx])
                     local nfloor = util.scalerNext(nFloorInt[idx])
+                    local ntex   = util.scalerNext(nTexCeilInt[idx])
 
                     -- Render upper walls
                     if x ~= x0 and x ~= x1 then
                         vline2(x, ceil, nceil,
+                            tex, ntex,
                             {
                                 sheet = textures.sheet,
                                 dim = textures.texDim,
@@ -260,11 +272,13 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
                     yLow[idx + 1][x + 1] = geo.clamp(math.min(floor, nfloor), -1,                   yLow[idx + 1][x + 1])
 
                     ceil = nfloor
+                    tex  = util.scalerNext(nTexFloorInt[idx])
                 end
 
                 -- Render lowest wall
                 if x ~= x0 and x ~= x1 then
                     vline2(x, ceil, floor,
+                        tex, util.scalerNext(texFloorInt),
                         {
                             sheet = textures.sheet,
                             dim = textures.texDim,
@@ -277,6 +291,7 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
                 
             elseif x ~= x0 and x ~= x1 then
                 vline2(x, ceil, floor,
+                    tex, util.scalerNext(texFloorInt),
                     {
                         sheet = textures.sheet,
                         dim = textures.texDim,

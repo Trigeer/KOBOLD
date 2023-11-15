@@ -1,14 +1,9 @@
 # KOBOLD Engine
 
-A DOOM style 3D graphics engine written in LÖVE framework.
+A Build style 3D graphics engine written in LÖVE framework.
 
 ## Things to come
-- Portal rendering
-- Focal clipping
-- Textures
+- Animated textures
 - Collisions that work *PROPERLY*
-
-## Later down the line
 - Map editor
 - Simple scripting for dynamic geometry
-- Simple enemy AI
