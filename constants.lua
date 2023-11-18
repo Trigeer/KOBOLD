@@ -3,10 +3,7 @@ Scaling = 3
 ScreenWidth  = 204
 ScreenHeight = 160
 
-WallOffset = 0.25
-
 -- Rendering constants
--- Global constants
 Near = 1e-5
 ShadowIntensity = 0.33
 
@@ -19,6 +16,7 @@ EyeHeight  = 6
 DuckHeight = 2.5
 HeadMargin = 1
 KneeHeight = 2
-Radius     = -0.05
+Radius     = 0.05
+WallOffset = 0.25
 
 RenderDepth = 10

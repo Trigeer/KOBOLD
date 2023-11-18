@@ -50,15 +50,11 @@ local function collideVertical(bounds, camera, timeDelta, eyes)
 end
 
 local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
-    local xCam = camera.where.x
-    local yCam = camera.where.y
     local sector   = sectorArr[camera.sector + 1]
     local collider = sector.collisions
 
-    local poi = {x = xCam + camera.velocity.x, y = yCam + camera.velocity.y}
-
-    camera.where.x = poi.x
-    camera.where.y = poi.y
+    camera.where.x = camera.where.x + camera.velocity.x
+    camera.where.y = camera.where.y + camera.velocity.y
 
     for idx = 1, #sector.vertex - 1 do
         local x1 = collider[idx + 0].x
@@ -70,36 +66,21 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
         local yDelta = y2 - y1
 
         -- Player and wall difference
-        local pdx = poi.x - x1
-        local pdy = poi.y - y1
-        -- Closest distance percentage
-        local d = xDelta^2 + yDelta^2
-        if d == 0 then d = 0.0001 end
-        -- Percentage on line 0-1
-        d = (xDelta * pdx + yDelta * pdy) / d
-        -- Line length
-        local lineD = math.sqrt(d)
-        -- Half bounding out of 256
-        local ends = (WallOffset / 2) / lineD
-        -- Out of edges
-        if d < 0 - ends or d > 1 + ends then goto continue end
-        -- Closest position
-        xDelta = d * xDelta + x1
-        yDelta = d * yDelta + y1
-        -- Distance player center point
-        d = math.sqrt((xDelta - poi.x)^2 + (yDelta - poi.y)^2)
+        local pdx = camera.where.x - x1
+        local pdy = camera.where.y - y1
+        local d = (xDelta * pdx + yDelta * pdy) / (xDelta^2 + yDelta^2)
 
-        if d < WallOffset then
-            local crossP = (x2 - x1) * pdy - (y2 - y1) * pdx
-            local xo = collider[idx].dx * WallOffset
-            local yo = collider[idx].dy * WallOffset
-            if crossP > 0 then
-                camera.where.x = xDelta - xo
-                camera.where.y = yDelta - yo
-            else
-                camera.where.x = xDelta + xo
-                camera.where.y = yDelta + yo
-            end
+        local ends = (WallOffset / 2) / math.sqrt(d)
+        if 0 - ends > d or d > 1 + ends then goto continue end
+
+        local dist = math.sqrt((d * xDelta - pdx)^2 + (d * yDelta - pdy)^2)
+
+        local crossP = geo.vxp(xDelta, yDelta, pdx, pdy)
+        local xo = collider[idx].dx * WallOffset
+        local yo = collider[idx].dy * WallOffset
+        if (crossP > 0 and dist < WallOffset) or crossP <= 0 then
+                camera.where.x = d * xDelta + x1 - xo
+                camera.where.y = d * yDelta + y1 - yo
         end
 
         -- -- Lack of collision
@@ -159,9 +140,6 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
 
         ::continue::
     end
-
-    -- camera.where.x = poi.x
-    -- camera.where.y = poi.y
 end
 
 mov.moveCamera = function (camera, xDelta, yDelta)
@@ -177,7 +155,7 @@ mov.calculateMove = function (sectorArr, vertexArr, camera, timeDelta, jump, cro
     local xOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1] + 1].x
     local yOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1] + 1].y
 
-    updateVelocity(camera, timeDelta / 0.02, jump, w, s, a, d)
+    updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
     collideHorizontal(sectorArr, vertexArr, camera, eyes)
     collideVertical(
         {

@@ -19,6 +19,7 @@ function love.load()
     camera = result[3]
 
     love.mouse.setRelativeMode(true)
+    love.window.setMode(ScreenWidth * Scaling, ScreenHeight * Scaling)
 end
 
 function love.update(dt)

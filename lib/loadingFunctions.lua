@@ -39,12 +39,12 @@ loader.loadMapGeometry = function (path)
 
             table.insert(tmp, {
                 p = {
-                    x = vertexArr[sector.vertex[idx] + 1].x + Radius * wallSin,
-                    y = vertexArr[sector.vertex[idx] + 1].y - Radius * wallCos
+                    x = vertexArr[sector.vertex[idx] + 1].x - Radius * wallSin,
+                    y = vertexArr[sector.vertex[idx] + 1].y + Radius * wallCos
                 },
                 n = {
-                    x = vertexArr[sector.vertex[idx + 1] + 1].x + Radius * wallSin,
-                    y = vertexArr[sector.vertex[idx + 1] + 1].y - Radius * wallCos
+                    x = vertexArr[sector.vertex[idx + 1] + 1].x - Radius * wallSin,
+                    y = vertexArr[sector.vertex[idx + 1] + 1].y + Radius * wallCos
                 }
             })
 
