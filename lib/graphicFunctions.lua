@@ -78,17 +78,17 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
     local camSin = math.sin(camera.angle)
 
     -- Save sector's origin
-    local xOrigin = verteces[sector.vertex[1] + 1].x - camera.where.x
-    local zOrigin = verteces[sector.vertex[1] + 1].y - camera.where.y
+    local xOrigin = verteces[sector.vertex[1].idx + 1].x - camera.where.x
+    local zOrigin = verteces[sector.vertex[1].idx + 1].y - camera.where.y
 
     -- Render each wall
     for s = 1, #sector.vertex - 1 do
  
         -- Obtain the coordinates of 2 endpoints of rendered edge
-        local vx0 = verteces[sector.vertex[s + 0] + 1].x - camera.where.x
-        local vy0 = verteces[sector.vertex[s + 0] + 1].y - camera.where.y
-        local vx1 = verteces[sector.vertex[s + 1] + 1].x - camera.where.x
-        local vy1 = verteces[sector.vertex[s + 1] + 1].y - camera.where.y
+        local vx0 = verteces[sector.vertex[s + 0].idx + 1].x - camera.where.x
+        local vy0 = verteces[sector.vertex[s + 0].idx + 1].y - camera.where.y
+        local vx1 = verteces[sector.vertex[s + 1].idx + 1].x - camera.where.x
+        local vy1 = verteces[sector.vertex[s + 1].idx + 1].y - camera.where.y
 
         -- Rotate them around camera's view
         local tx0 = vx0 * camSin - vy0 * camCos
@@ -97,28 +97,28 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
         local tz1 = vx1 * camCos + vy1 * camSin
 
         -- Only render if at least partially in front of the camera
-        if tz0 <= Near and tz1 <= Near then goto continue end
+        if tz0 <= 0 and tz1 <= 0 then goto continue end
 
         -- Clip to view frustrum
         local u0 = 0
         local u1 = textures.texDim.width - 1
 
-        if tz0 <= Near or tz1 <= Near then
+        if tz0 <= 0 or tz1 <= 0 then
             local inter = geo.intersect(geo.intercheck(
                 tx0, tz0, tx1, tz1,
-                -1, Near,
-                1, Near
+                -1, 0,
+                 1, 0
             ).uAB, tx0, tz0, tx1, tz1)
 
             local org0 = {x = tx0, z = tz0}
             local org1 = {x = tx1, z = tz1}
 
-            if tz0 < Near then
+            if tz0 <= 0 then
                 tx0 = inter.x
-                tz0 = inter.y
-            elseif tz1 < Near then
+                tz0 = 1e-5
+            elseif tz1 <= 0 then
                 tx1 = inter.x
-                tz1 = inter.y
+                tz1 = 1e-5
             end
 
             -- u1 is only used for texture width value
@@ -184,8 +184,8 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
             for idx, n in pairs(neighbor) do
 
                 -- Get neighbor's origin
-                local nxOrigin = verteces[sectors[n + 1].vertex[1] + 1].x - camera.where.x
-                local nzOrigin = verteces[sectors[n + 1].vertex[1] + 1].y - camera.where.y
+                local nxOrigin = verteces[sectors[n + 1].vertex[1].idx + 1].x - camera.where.x
+                local nzOrigin = verteces[sectors[n + 1].vertex[1].idx + 1].y - camera.where.y
                
                 -- Obtain floor and ceiling heights, relative to camera position
                 local vnCeil0  = geo.planeZ(sectors[n + 1].ceil,  nxOrigin, nzOrigin, vx0, vy0) - camera.where.z
@@ -264,7 +264,7 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
                             tex, ntex,
                             {
                                 sheet = textures.sheet,
-                                dim = textures.texDim,
+                                dim   = textures.texDim,
                                 cords = textures.sector[now.sector][s][idx]
                             },
                             txtx, shader,
@@ -286,7 +286,7 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
                         tex, util.scalerNext(texFloorInt),
                         {
                             sheet = textures.sheet,
-                            dim = textures.texDim,
+                            dim   = textures.texDim,
                             cords = textures.sector[now.sector][s][#neighbor + 1]
                         },
                         txtx, shader,
@@ -299,7 +299,7 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
                     tex, util.scalerNext(texFloorInt),
                     {
                         sheet = textures.sheet,
-                        dim = textures.texDim,
+                        dim   = textures.texDim,
                         cords = textures.sector[now.sector][s][1]
                     },
                     txtx, shader,

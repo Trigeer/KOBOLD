@@ -51,16 +51,16 @@ end
 
 local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
     local sector   = sectorArr[camera.sector + 1]
-    local collider = sector.collisions
+    local collider = sector.vertex
 
     camera.where.x = camera.where.x + camera.velocity.x
     camera.where.y = camera.where.y + camera.velocity.y
 
     for idx = 1, #sector.vertex - 1 do
-        local x1 = collider[idx + 0].x
-        local y1 = collider[idx + 0].y
-        local x2 = collider[idx + 1].x
-        local y2 = collider[idx + 1].y
+        local x1 = vertexArr[collider[idx + 0].idx + 1].x
+        local y1 = vertexArr[collider[idx + 0].idx + 1].y
+        local x2 = vertexArr[collider[idx + 1].idx + 1].x
+        local y2 = vertexArr[collider[idx + 1].idx + 1].y
 
         local xDelta = x2 - x1
         local yDelta = y2 - y1
@@ -152,8 +152,8 @@ mov.calculateMove = function (sectorArr, vertexArr, camera, timeDelta, jump, cro
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
     -- Get origin
-    local xOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1] + 1].x
-    local yOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1] + 1].y
+    local xOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1].idx + 1].x
+    local yOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1].idx + 1].y
 
     updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
     collideHorizontal(sectorArr, vertexArr, camera, eyes)
