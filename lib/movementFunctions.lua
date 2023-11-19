@@ -11,8 +11,8 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     end
 
     -- Apply key presses
-    local camSin = math.sin(camera.angle) * 0.2
-    local camCos = math.cos(camera.angle) * 0.2
+    local camSin = math.sin(camera.angle)
+    local camCos = math.cos(camera.angle)
     local mod = {ws = 0, ad = 0}
     if w and not s then mod.ws = 1 elseif not w and s then mod.ws = -1 end
     if a and not d then mod.ad = 1 elseif not a and d then mod.ad = -1 end
@@ -21,12 +21,12 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
         y = mod.ws * camSin - mod.ad * camCos
     }
 
-    local acceleration = 0
-    if w or s or a or d then acceleration = 0.15 else acceleration = 0.2 end
+    local decay = DecayTop
+    if w or s or a or d then decay = DecayLow end
 
     -- New velocity
-    camera.velocity.x = (camera.velocity.x * (1 - acceleration) + moveVector.x * acceleration) * timeDelta
-    camera.velocity.y = (camera.velocity.y * (1 - acceleration) + moveVector.y * acceleration) * timeDelta
+    camera.velocity.x = (camera.velocity.x * decay + moveVector.x * Speed) * timeDelta
+    camera.velocity.y = (camera.velocity.y * decay + moveVector.y * Speed) * timeDelta
 end
 
 -- Bounds indicate floor and ceiling height
@@ -34,6 +34,8 @@ local function collideVertical(bounds, camera, timeDelta, eyes)
     -- Gravity
     camera.velocity.z = camera.velocity.z - 0.05 * timeDelta
     local next = camera.where.z + camera.velocity.z
+
+    -- TODO: Investigate risk of vertical OOB due too wrong z-velocity direction
 
     -- Snap to ground
     if camera.velocity.z < 0 and next < bounds.floor + eyes then
@@ -70,7 +72,8 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
         local pdy = camera.where.y - y1
         local d = (xDelta * pdx + yDelta * pdy) / (xDelta^2 + yDelta^2)
 
-        local ends = (WallOffset / 2) / math.sqrt(d)
+        -- Skip on too far
+        local ends = WallOffset / math.sqrt(xDelta^2 + yDelta^2)
         if 0 - ends > d or d > 1 + ends then goto continue end
 
         local dist = math.sqrt((d * xDelta - pdx)^2 + (d * yDelta - pdy)^2)
@@ -78,9 +81,9 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
         local crossP = geo.vxp(xDelta, yDelta, pdx, pdy)
         local xo = collider[idx].dx * WallOffset
         local yo = collider[idx].dy * WallOffset
-        if (crossP > 0 and dist < WallOffset) or crossP <= 0 then
-                camera.where.x = d * xDelta + x1 - xo
-                camera.where.y = d * yDelta + y1 - yo
+        if dist < WallOffset or crossP <= 0 then
+            camera.where.x = d * xDelta + x1 - xo
+            camera.where.y = d * yDelta + y1 - yo
         end
 
         -- -- Lack of collision
