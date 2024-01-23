@@ -52,104 +52,110 @@ local function collideVertical(bounds, camera, timeDelta, eyes)
 end
 
 local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
-    local sector   = sectorArr[camera.sector + 1]
-    local collider = sector.vertex
+    local checkAgainst = {camera.sector}
 
-    camera.where.x = camera.where.x + camera.velocity.x
-    camera.where.y = camera.where.y + camera.velocity.y
+    for _, sec in pairs(checkAgainst) do
+        local sector   = sectorArr[camera.sector + 1]
+        local collider = sector.vertex
 
-    for idx = 1, #sector.vertex - 1 do
-        local x1 = vertexArr[collider[idx + 0].idx + 1].x
-        local y1 = vertexArr[collider[idx + 0].idx + 1].y
-        local x2 = vertexArr[collider[idx + 1].idx + 1].x
-        local y2 = vertexArr[collider[idx + 1].idx + 1].y
+        camera.where.x = camera.where.x + camera.velocity.x
+        camera.where.y = camera.where.y + camera.velocity.y
 
-        local xDelta = x2 - x1
-        local yDelta = y2 - y1
+        for idx = 1, #sector.vertex - 1 do
+            local x1 = vertexArr[collider[idx + 0].idx + 1].x
+            local y1 = vertexArr[collider[idx + 0].idx + 1].y
+            local x2 = vertexArr[collider[idx + 1].idx + 1].x
+            local y2 = vertexArr[collider[idx + 1].idx + 1].y
 
-        -- Player and wall difference
-        local pdx = camera.where.x - x1
-        local pdy = camera.where.y - y1
-        local d = (xDelta * pdx + yDelta * pdy) / (xDelta^2 + yDelta^2)
+            local xDelta = x2 - x1
+            local yDelta = y2 - y1
 
-        -- Skip on too far
-        local ends = WallOffset / math.sqrt(xDelta^2 + yDelta^2)
-        if 0 - ends > d or d > 1 + ends then goto continue end
+            -- Player and wall difference
+            local pdx = camera.where.x - x1
+            local pdy = camera.where.y - y1
+            local d = (xDelta * pdx + yDelta * pdy) / (xDelta^2 + yDelta^2)
 
-        local dist = math.sqrt((d * xDelta - pdx)^2 + (d * yDelta - pdy)^2)
+            -- Skip on too far
+            local ends = WallOffset / math.sqrt(xDelta^2 + yDelta^2)
+            if 0 - ends > d or d > 1 + ends then goto continue end
 
-        local crossP = geo.vxp(xDelta, yDelta, pdx, pdy)
-        local xo = collider[idx].dx * WallOffset
-        local yo = collider[idx].dy * WallOffset
-        if dist < WallOffset or crossP <= 0 then
-            camera.where.x = d * xDelta + x1 - xo
-            camera.where.y = d * yDelta + y1 - yo
-        end
+            local dx   = d * xDelta + x1
+            local dy   = d * yDelta + y1
+            local dist = math.sqrt((dx - camera.where.x)^2 + (dy - camera.where.y)^2)
 
-        -- -- Lack of collision
-        -- if geo.pointSide(xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2) > 0 then goto continue end
+            local crossP = geo.vxp(xDelta, yDelta, pdx, pdy)
+            local xo = collider[idx].dx * WallOffset
+            local yo = collider[idx].dy * WallOffset
+            if dist < WallOffset or crossP <= 0 then
+                local neighbors = sector.neighbor[idx]
 
-        -- local u = geo.intercheck(xCam, yCam, xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2)
-        -- if u.uAB > 0 and u.uAB < 1 and u.uCD >= 0 and u.uCD <= 1 and next(sector.neighbor[idx]) ~= nil then
-        --     local intersectionPoint = geo.intersect(u.uCD, x1, y1, x2, y2)
-        --     local tarCeil = 0
-        --     local target  = 0
-        --     for t, n in pairs(sector.neighbor[idx]) do
-        --         tarCeil = geo.planeZ(
-        --             sectorArr[n + 1].ceil,
-        --             vertexArr[sectorArr[n + 1].vertex[1] + 1].x,
-        --             vertexArr[sectorArr[n + 1].vertex[1] + 1].y,
-        --             intersectionPoint.x,
-        --             intersectionPoint.y
-        --         )
-        --         if tarCeil >= camera.where.z + HeadMargin then
-        --             target = t
-        --         else break end
-        --     end
+                if next(neighbors) ~= nil then
+                    
+                    -- Calculate camera bounds
+                    local cameraTop = camera.where.z + HeadMargin
+                    local cameraMid = camera.where.z - eyes + KneeHeight
 
-        --     if target > 0 then
-        --         local holeLow = geo.planeZ(
-        --             sectorArr[target + 1].floor,
-        --             vertexArr[sectorArr[target + 1].vertex[1] + 1].x,
-        --             vertexArr[sectorArr[target + 1].vertex[1] + 1].y,
-        --             intersectionPoint.x,
-        --             intersectionPoint.y
-        --         )
-        --         local holeTop = geo.planeZ(
-        --             sectorArr[target + 1].ceil,
-        --             vertexArr[sectorArr[target + 1].vertex[1] + 1].x,
-        --             vertexArr[sectorArr[target + 1].vertex[1] + 1].y,
-        --             intersectionPoint.x,
-        --             intersectionPoint.y
-        --         )
+                    -- Calculate local sector heights
+                    local holeLow = geo.planeZ(
+                        sector.floor,
+                        vertexArr[collider[1].idx + 1].x,
+                        vertexArr[collider[1].idx + 1].y,
+                        dx, dy
+                    )
+                    local holeTop = geo.planeZ(
+                        sector.ceil,
+                        vertexArr[collider[1].idx + 1].x,
+                        vertexArr[collider[1].idx + 1].y,
+                        dx, dy
+                    )
 
-        --         if holeLow <= camera.where.z - eyes + KneeHeight and holeTop - holeLow >= eyes + HeadMargin then
-        --             camera.sector   = sector.neighbor[idx][target]
-        --             camera.grounded = false
-        --             -- TODO: Reduce recursion
-        --             collideHorizontal(sectorArr, vertexArr, camera, eyes)
-        --             return
-        --         end
-        --     end
-        -- end
+                    for n, neighbor in pairs(neighbors) do
 
-        -- local c = geo.cast(xCam + camera.velocity.x, yCam + camera.velocity.y, x1, y1, x2, y2)
+                        local boundLow = math.max(
+                            holeLow,
+                            geo.planeZ(
+                                sectorArr[neighbor + 1].floor,
+                                vertexArr[sectorArr[neighbor + 1].vertex[1].idx + 1].x,
+                                vertexArr[sectorArr[neighbor + 1].vertex[1].idx + 1].y,
+                                dx, dy
+                            )
+                        )
+                        local boundTop = math.min(
+                            holeTop,
+                            geo.planeZ(
+                                sectorArr[neighbor + 1].ceil,
+                                vertexArr[sectorArr[neighbor + 1].vertex[1].idx + 1].x,
+                                vertexArr[sectorArr[neighbor + 1].vertex[1].idx + 1].y,
+                                dx, dy
+                            )
+                        )
 
-        -- c.x  = geo.clamp(c.x, math.min(x1, x2), math.max(x1, x2))
-        -- c.y  = geo.clamp(c.y, math.min(y1, y2), math.max(y1, y2))
-        -- c.sd = (c.x - xCam + camera.velocity.x)^2 + (c.y - yCam + camera.velocity.y)^2
+                        if boundTop - boundLow >= eyes + HeadMargin and boundLow <= cameraMid and boundTop >= cameraTop then
+                            if neighbor == checkAgainst then -- correct this
+                                table.insert(checkAgainst, neighbor)
+                                goto continue
+                            end
+                        end
+                    end
+                end
 
-        -- if c.sd < poi.sd then poi = c end
+                camera.where.x = d * xDelta + x1 - xo
+                camera.where.y = d * yDelta + y1 - yo
+            end
 
         ::continue::
+        end
     end
+
+    -- Find camera sector
 end
 
 mov.moveCamera = function (camera, xDelta, yDelta)
-    camera.angle = camera.angle + xDelta * 0.03
-    camera.pitch = geo.clamp(camera.pitch + yDelta * 0.05, -5, 5)
+    camera.angle = camera.angle + xDelta * xMouseSensitivity
+    camera.pitch = geo.clamp(camera.pitch + yDelta * yMouseSensitivity, -5, 5)
 end
 
+-- Locked to assumed 60 FPS
 mov.calculateMove = function (sectorArr, vertexArr, camera, timeDelta, jump, crouch, w, s, a, d)
     local eyes = 0
     if crouch then eyes = DuckHeight else eyes = EyeHeight end

@@ -1,10 +1,12 @@
 io.stdout:setvbuf("no")
 
+-- Imports
 require("constants")
 local lod = require("lib.loadingFunctions")
 local gpx = require("lib.graphicFunctions")
 local mov = require("lib.movementFunctions")
 
+-- Active data
 local vertexArr = {}
 local sectorArr = {}
 local textures  = {}
