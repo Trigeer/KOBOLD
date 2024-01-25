@@ -54,13 +54,13 @@ end
 
 local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
     local checkAgainst = {camera.sector}
-
+    
+    camera.where.x = camera.where.x + camera.velocity.x
+    camera.where.y = camera.where.y + camera.velocity.y
+    
     for _, sec in pairs(checkAgainst) do
         local sector   = sectorArr[sec + 1]
         local collider = sector.vertex
-
-        camera.where.x = camera.where.x + camera.velocity.x
-        camera.where.y = camera.where.y + camera.velocity.y
 
         for idx = 1, #sector.vertex - 1 do
             local x1 = vertexArr[collider[idx + 0].idx + 1].x
@@ -110,7 +110,7 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
                         dx, dy
                     )
 
-                    for n, neighbor in pairs(neighbors) do
+                    for _, neighbor in pairs(neighbors) do
 
                         local boundLow = math.max(
                             holeLow,
@@ -134,8 +134,8 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
                         if boundTop - boundLow >= eyes + HeadMargin and boundLow <= cameraMid and boundTop >= cameraTop then
                             if not util.table_contains(checkAgainst, neighbor) then
                                 table.insert(checkAgainst, neighbor)
-                                goto continue
                             end
+                            goto continue
                         end
                     end
                 end

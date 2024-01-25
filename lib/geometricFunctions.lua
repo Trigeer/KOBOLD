@@ -71,12 +71,18 @@ geo.checkInside = function (vertexArr, sector, player)
             y1, y2 = y2, y1
         end
 
-        -- Left; negate
-        if px <= x1 and px < x2 then
+        if py <= y1 and py < y2 then goto continue end -- below
+        if py >= y1 and py > y2 then goto continue end -- above
+        if px >= x1 and px > x2 then goto continue end -- right
+        if px <= x1 and px < x2 then -- left
             inside = not inside
-        elseif ((x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)) > 0 then
+            goto continue
+        end
+        if (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1) > 0 then
             inside = not inside
         end
+
+        ::continue::
     end
 
     return inside
