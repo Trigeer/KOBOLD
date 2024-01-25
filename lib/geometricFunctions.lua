@@ -50,4 +50,36 @@ geo.planeZ = function (plane, xRef, yRef, xTar, yTar)
     return plane[1] + xDelta + yDelta
 end
 
+-- Checks if camera is inside a given confines
+geo.checkInside = function (vertexArr, sector, player)
+    local inside = false
+    local collider = sector.vertex
+
+    local px = player.where.x
+    local py = player.where.y
+
+    for idx = 1, #sector.vertex - 1 do
+        -- Hold both points
+        local x1 = vertexArr[collider[idx + 0].idx + 1].x
+        local y1 = vertexArr[collider[idx + 0].idx + 1].y
+        local x2 = vertexArr[collider[idx + 1].idx + 1].x
+        local y2 = vertexArr[collider[idx + 1].idx + 1].y
+
+        -- Correct order
+        if y1 > y2 then
+            x1, x2 = x2, x1
+            y1, y2 = y2, y1
+        end
+
+        -- Left; negate
+        if px <= x1 and px < x2 then
+            inside = not inside
+        elseif ((x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)) > 0 then
+            inside = not inside
+        end
+    end
+
+    return inside
+end
+
 return geo

@@ -1,5 +1,6 @@
 require("constants")
-local geo = require("lib.geometricFunctions")
+local geo  = require("lib.geometricFunctions")
+local util = require("lib.utilities")
 
 local mov = {}
 
@@ -55,7 +56,7 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
     local checkAgainst = {camera.sector}
 
     for _, sec in pairs(checkAgainst) do
-        local sector   = sectorArr[camera.sector + 1]
+        local sector   = sectorArr[sec + 1]
         local collider = sector.vertex
 
         camera.where.x = camera.where.x + camera.velocity.x
@@ -131,7 +132,7 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
                         )
 
                         if boundTop - boundLow >= eyes + HeadMargin and boundLow <= cameraMid and boundTop >= cameraTop then
-                            if neighbor == checkAgainst then -- correct this
+                            if not util.table_contains(checkAgainst, neighbor) then
                                 table.insert(checkAgainst, neighbor)
                                 goto continue
                             end
@@ -147,7 +148,12 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
         end
     end
 
-    -- Find camera sector
+    for _, sec in pairs(checkAgainst) do
+        if geo.checkInside(vertexArr, sectorArr[sec + 1], camera) then
+            camera.sector = sec
+            break
+        end
+    end
 end
 
 mov.moveCamera = function (camera, xDelta, yDelta)
