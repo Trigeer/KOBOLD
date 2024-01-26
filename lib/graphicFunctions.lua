@@ -115,10 +115,10 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
 
             if tz0 <= 0 then
                 tx0 = inter.x
-                tz0 = 1e-5
+                tz0 = 1e-10
             elseif tz1 <= 0 then
                 tx1 = inter.x
-                tz1 = 1e-5
+                tz1 = 1e-10
             end
 
             -- u1 is only used for texture width value

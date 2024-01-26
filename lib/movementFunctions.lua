@@ -57,6 +57,10 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
     
     camera.where.x = camera.where.x + camera.velocity.x
     camera.where.y = camera.where.y + camera.velocity.y
+
+    -- Calculate camera bounds
+    local cameraTop = camera.where.z + HeadMargin
+    local cameraMid = camera.where.z - eyes + KneeHeight
     
     for _, sec in pairs(checkAgainst) do
         local sector   = sectorArr[sec + 1]
@@ -83,19 +87,12 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
             local dx   = d * xDelta + x1
             local dy   = d * yDelta + y1
             local dist = math.sqrt((dx - camera.where.x)^2 + (dy - camera.where.y)^2)
-
             local crossP = geo.vxp(xDelta, yDelta, pdx, pdy)
-            local xo = collider[idx].dx * WallOffset
-            local yo = collider[idx].dy * WallOffset
+
             if dist < WallOffset or crossP <= 0 then
                 local neighbors = sector.neighbor[idx]
 
                 if next(neighbors) ~= nil then
-                    
-                    -- Calculate camera bounds
-                    local cameraTop = camera.where.z + HeadMargin
-                    local cameraMid = camera.where.z - eyes + KneeHeight
-
                     -- Calculate local sector heights
                     local holeLow = geo.planeZ(
                         sector.floor,
@@ -140,8 +137,8 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
                     end
                 end
 
-                camera.where.x = d * xDelta + x1 - xo
-                camera.where.y = d * yDelta + y1 - yo
+                camera.where.x = d * xDelta + x1 - collider[idx].dx * WallOffset
+                camera.where.y = d * yDelta + y1 - collider[idx].dy * WallOffset
             end
 
         ::continue::
@@ -166,12 +163,13 @@ mov.calculateMove = function (sectorArr, vertexArr, camera, timeDelta, jump, cro
     local eyes = 0
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
+    updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
+    collideHorizontal(sectorArr, vertexArr, camera, eyes)
+
     -- Get origin
     local xOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1].idx + 1].x
     local yOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1].idx + 1].y
 
-    updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
-    collideHorizontal(sectorArr, vertexArr, camera, eyes)
     collideVertical(
         {
             floor = geo.planeZ(sectorArr[camera.sector + 1].floor, xOrigin, yOrigin, camera.where.x, camera.where.y),
