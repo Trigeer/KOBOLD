@@ -64,4 +64,8 @@ loader.loadMapTexturing = function (path)
     return {sheet = texture, texDim = textureData.texDim, sector = textureData.sector}
 end
 
+loader.loadMapDynamics = function (path)
+    
+end
+
 return loader

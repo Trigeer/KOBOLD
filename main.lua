@@ -5,16 +5,19 @@ require("constants")
 local lod = require("lib.loadingFunctions")
 local gpx = require("lib.graphicFunctions")
 local mov = require("lib.movementFunctions")
+local dyn = require("lib.dynamicFunctions")
 
 -- Active data
 local vertexArr = {}
 local sectorArr = {}
+local eventsArr = {}
 local textures  = {}
 local camera = {}
 
 function love.load()
     local result = lod.loadMapGeometry("maps/map0_geometry.lua")
     textures = lod.loadMapTexturing("maps/map0_texturing.lua")
+    eventsArr = lod.loadMapDynamics("maps/map0_dynamics.lua")
 
     vertexArr = result[1]
     sectorArr = result[2]
@@ -25,6 +28,7 @@ function love.load()
 end
 
 function love.update(dt)
+    dyn.executeEvents(vertexArr, sectorArr, eventsArr, dt)
     mov.calculateMove(
         sectorArr, vertexArr, camera, dt,
         love.keyboard.isDown("space"),
