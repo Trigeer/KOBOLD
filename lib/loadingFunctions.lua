@@ -1,6 +1,6 @@
 -- Imports
 require("constants")
-local geo = require("lib.geometricFunctions")
+local geo = require("lib.helpers.geometricFunctions")
 
 local loader = {}
 
