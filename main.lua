@@ -1,10 +1,12 @@
 io.stdout:setvbuf("no")
 
+-- Imports
 require("constants")
 local lod = require("lib.loadingFunctions")
 local gpx = require("lib.graphicFunctions")
 local mov = require("lib.movementFunctions")
 
+-- Active data
 local vertexArr = {}
 local sectorArr = {}
 local textures  = {}
@@ -19,6 +21,7 @@ function love.load()
     camera = result[3]
 
     love.mouse.setRelativeMode(true)
+    love.window.setMode(ScreenWidth * Scaling, ScreenHeight * Scaling)
 end
 
 function love.update(dt)

@@ -14,6 +14,15 @@ function utils.shallow(orig)
     return copy
 end
 
+function utils.table_contains(tbl, x)
+    for _, v in pairs(tbl) do
+        if v == x then 
+            return true 
+        end
+    end
+    return false
+end
+
 -- Scaler -> {result, bop, fd, ca, cache}
 utils.scalerInit = function (a, b, c, d, f)
     local bop = 1
