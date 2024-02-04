@@ -7,14 +7,32 @@ local function recalculateNormals(verteces, sectors, affected)
     for _, sector in pairs(affected) do
         for _, vertex in pairs(sector.points) do
             
-            local xOff = verteces[sectors[sector].vertex[vertex + 1] + 1].x - verteces[sectors[sector].vertex[vertex] + 1].x
-            local yOff = verteces[sectors[sector].vertex[vertex + 1] + 1].y - verteces[sectors[sector].vertex[vertex] + 1].y
+            -- Forwards
+            local xOff = verteces[sectors[sector.val].vertex[vertex + 1] + 1].x - verteces[sectors[sector.val].vertex[vertex] + 1].x
+            local yOff = verteces[sectors[sector.val].vertex[vertex + 1] + 1].y - verteces[sectors[sector.val].vertex[vertex] + 1].y
 
             local wallLen = math.sqrt(xOff^2 + yOff^2)
             local wallSin =  yOff / wallLen
             local wallCos = -xOff / wallLen
 
-            sectors[sector].vertex[vertex] = {idx = sectors[sector].vertex[vertex], dx = wallSin, dy = wallCos}
+            sectors[sector.val].vertex[vertex].dx = wallSin
+            sectors[sector.val].vertex[vertex].dy = wallCos
+
+            -- Backwards
+            local back = vertex - 1
+            if back == 0 then
+                back = #sectors[sector.val].vertex - 1
+            end
+
+            xOff = verteces[sectors[sector.val].vertex[vertex] + 1].x - verteces[sectors[sector.val].vertex[back] + 1].x
+            yOff = verteces[sectors[sector.val].vertex[vertex] + 1].y - verteces[sectors[sector.val].vertex[back] + 1].y
+
+            wallLen = math.sqrt(xOff^2 + yOff^2)
+            wallSin =  yOff / wallLen
+            wallCos = -xOff / wallLen
+
+            sectors[sector.val].vertex[back].dx = wallSin
+            sectors[sector.val].vertex[back].dy = wallCos
 
         end
     end
@@ -39,7 +57,7 @@ end
 
 local function playerEvent(camera, event, dt)
     event.clock = (event.clock + dt) % event.loopTime
-    camera = event:code(cache)
+    camera = event:code(camera, cache)
 end
 
 dynamo.executeEvents = function (verteces, sectors, camera, events, dt)
