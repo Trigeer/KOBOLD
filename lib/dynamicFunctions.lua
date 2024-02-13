@@ -2,14 +2,20 @@ local dynamo = {}
 
 -- A tool for seperate events to exchange information
 local cache = {}
+local scheduler = {}
 
 local function executeTrigger(trigger, visited, camera, action)
     if not trigger.actionable or action then
-        for _, sec in pairs(trigger.area) do
-            for _, v in pairs(visited) do 
-                if sec == v then
-                    trigger:code(camera, cache)
-                    do return true end
+        if trigger.universal then
+            table.insert(scheduler, trigger:code(camera, cache))
+            do return true end
+        else
+            for _, sec in pairs(trigger.area) do
+                for _, v in pairs(visited) do 
+                    if sec == v then
+                        table.insert(scheduler, trigger:code(camera, cache))
+                        do return true end
+                    end
                 end
             end
         end
@@ -26,6 +32,6 @@ end
 return dynamo
 
 
--- trigger = {actionable = true, area = {}, code = function (camera, cache)
-    
+-- trigger = {actionable = true, universal = false, area = {}, code = function (camera, cache)
+    -- return event
 -- end}
