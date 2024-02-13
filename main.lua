@@ -5,16 +5,19 @@ require("constants")
 local lod = require("lib.loadingFunctions")
 local gpx = require("lib.graphicFunctions")
 local mov = require("lib.movementFunctions")
+local dyn = require("lib.dynamicFunctions")
 
 -- Active data
 local vertexArr = {}
 local sectorArr = {}
 local textures  = {}
+local triggers  = {}
 local camera = {}
 
 function love.load()
     local result = lod.loadMapGeometry("maps/map0_geometry.lua")
     textures = lod.loadMapTexturing("maps/map0_texturing.lua")
+    triggers = lod.loadTriggers("maps/map0_triggers.lua")
 
     vertexArr = result[1]
     sectorArr = result[2]
@@ -25,7 +28,7 @@ function love.load()
 end
 
 function love.update(dt)
-    mov.calculateMove(
+    local visited = mov.calculateMove(
         sectorArr, vertexArr, camera, dt,
         love.keyboard.isDown("space"),
         love.keyboard.isDown("lshift"),
@@ -34,6 +37,7 @@ function love.update(dt)
         love.keyboard.isDown("a"),
         love.keyboard.isDown("d")
     )
+    dyn.checkTriggers(triggers, visited, camera, love.keyboard.isDown("e"))
 end
 
 function love.draw()

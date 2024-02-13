@@ -64,4 +64,8 @@ loader.loadMapTexturing = function (path)
     return {sheet = texture, texDim = textureData.texDim, sector = textureData.sector}
 end
 
+loader.loadTriggers = function (path)
+    return love.filesystem.load(path)()
+end
+
 return loader

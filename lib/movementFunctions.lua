@@ -151,6 +151,8 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
             break
         end
     end
+
+    return checkAgainst
 end
 
 mov.moveCamera = function (camera, xDelta, yDelta)
@@ -164,7 +166,7 @@ mov.calculateMove = function (sectorArr, vertexArr, camera, timeDelta, jump, cro
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
     updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
-    collideHorizontal(sectorArr, vertexArr, camera, eyes)
+    local visited = collideHorizontal(sectorArr, vertexArr, camera, eyes)
 
     -- Get origin
     local xOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1].idx + 1].x
@@ -177,6 +179,8 @@ mov.calculateMove = function (sectorArr, vertexArr, camera, timeDelta, jump, cro
         },
         camera, timeDelta * 60, eyes
     )
+
+    return visited
 end
 
 return mov
