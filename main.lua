@@ -16,9 +16,8 @@ function love.load()
     local result = lod.loadMapGeometry("maps/map0_geometry.lua")
     textures = lod.loadMapTexturing("maps/map0_texturing.lua")
 
-    vertexArr = result[1]
-    sectorArr = result[2]
-    camera = result[3]
+    sectorArr = result[1]
+    camera    = result[2]
 
     love.mouse.setRelativeMode(true)
     love.window.setMode(ScreenWidth * Scaling, ScreenHeight * Scaling)
@@ -26,7 +25,7 @@ end
 
 function love.update(dt)
     mov.calculateMove(
-        sectorArr, vertexArr, camera, dt,
+        sectorArr, camera, dt,
         love.keyboard.isDown("space"),
         love.keyboard.isDown("lshift"),
         love.keyboard.isDown("w"),
@@ -37,7 +36,7 @@ function love.update(dt)
 end
 
 function love.draw()
-    gpx.drawScreen(vertexArr, sectorArr, textures, camera)
+    gpx.drawScreen(sectorArr, textures, camera)
 end
 
 -- Look around

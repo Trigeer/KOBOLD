@@ -62,7 +62,7 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
     local cameraTop = camera.where.z + HeadMargin
     local cameraMid = camera.where.z - eyes + KneeHeight
     
-    for _, sec in pairs(checkAgainst) do
+    for _, sec in ipairs(checkAgainst) do
         local sector   = sectorArr[sec + 1]
         local collider = sector.vertex
 
@@ -107,7 +107,7 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
                         dx, dy
                     )
 
-                    for _, neighbor in pairs(neighbors) do
+                    for _, neighbor in ipairs(neighbors) do
 
                         local boundLow = math.max(
                             holeLow,
@@ -145,7 +145,7 @@ local function collideHorizontal(sectorArr, vertexArr, camera, eyes)
         end
     end
 
-    for _, sec in pairs(checkAgainst) do
+    for _, sec in ipairs(checkAgainst) do
         if geo.checkInside(vertexArr, sectorArr[sec + 1], camera) then
             camera.sector = sec
             break

@@ -5,7 +5,7 @@ function utils.shallow(orig)
     local copy
     if orig_type == 'table' then
         copy = {}
-        for orig_key, orig_value in pairs(orig) do
+        for orig_key, orig_value in ipairs(orig) do
             copy[orig_key] = orig_value
         end
     else -- number, string, boolean, etc
@@ -15,7 +15,7 @@ function utils.shallow(orig)
 end
 
 function utils.table_contains(tbl, x)
-    for _, v in pairs(tbl) do
+    for _, v in ipairs(tbl) do
         if v == x then 
             return true 
         end
