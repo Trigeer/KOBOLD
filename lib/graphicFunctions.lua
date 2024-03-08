@@ -79,7 +79,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
     local camSin = math.sin(camera.angle)
 
     -- Render each wall
-    for s = 0, #sector.nodes-1 do
+    for s = 1, #sector.nodes do
  
         -- Obtain the coordinates of 2 endpoints of rendered edge
         local vx0 = sector:nodeAt(s + 0).x - camera.where.x
@@ -307,7 +307,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
                 drawSector(
                 sectors, textures, camera,
                 {
-                    sector = neighbor[idx] + 1,
+                    sector = neighbor[idx],
                     sx0 = xBegin,
                     sx1 = xEnd
                 },
