@@ -60,7 +60,7 @@ loader.loadMapGeometry = function (path)
         where = {
             x = p.x,
             y = p.y,
-            z = sectorArr[p.sector + 1]:floor(p.x, p.y) + EyeHeight + 1e-5
+            z = sectorArr[p.sector + 1]:floor(p) + EyeHeight + 1e-5
         },
         angle  = p.angle,
         sector = p.sector + 1,

@@ -322,7 +322,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
     
 end
 
-graphics.drawScreen = function (verteces, sectors, textures, camera)
+graphics.drawScreen = function (sectors, textures, camera)
     -- Prepare screen bounds
     local yTop = {{}}
     local yLow = {{}}
@@ -335,7 +335,7 @@ graphics.drawScreen = function (verteces, sectors, textures, camera)
     drawSector(
         sectors, textures, camera,
         {
-            sector = camera.sector + 1,
+            sector = camera.sector,
             sx0 = 0,
             sx1 = ScreenWidth - 1
         },

@@ -28,9 +28,9 @@ function Sector:new (nodes, links, ceil, floor)
     setmetatable(sector, self)
     self.__index = self
 
-    for idx = 0, #nodes-1 do
-        table.insert(sector.walls, {})
-        sector:calculateWall(idx)
+    for idx = 0, #self.nodes-1 do
+        table.insert(self.walls, {})
+        self:calculateWall(idx)
     end
 
     return sector
