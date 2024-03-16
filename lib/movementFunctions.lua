@@ -135,8 +135,8 @@ local function collideHorizontal(sectorArr, camera, eyes)
 end
 
 mov.moveCamera = function (camera, xDelta, yDelta)
-    camera.angle = camera.angle + xDelta * xMouseSensitivity
-    camera.pitch = geo.clamp(camera.pitch + yDelta * yMouseSensitivity, -5, 5)
+    camera.angle = camera.angle + xDelta * SensitivityX
+    camera.pitch = geo.clamp(camera.pitch + yDelta * SensitivityY, -5, 5)
 end
 
 -- Locked to assumed 60 FPS

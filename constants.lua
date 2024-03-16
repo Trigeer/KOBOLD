@@ -10,8 +10,8 @@ ShadowIntensity = 0.33
 Hfov = 0.73 --* ScreenHeight / ScreenWidth
 Vfov = 0.2
 
-xMouseSensitivity = 0.03
-yMouseSensitivity = 0.05
+SensitivityX = 0.03
+SensitivityY = 0.05
 
 -- Camera constraints
 EyeHeight  = 6      -- Height of camera by default
