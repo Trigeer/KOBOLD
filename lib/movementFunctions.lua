@@ -60,10 +60,10 @@ local function collideHorizontal(sectorArr, camera, eyes)
 
     -- Calculate camera bounds
     local cameraTop = camera.where.z + HeadMargin
-    local cameraMid = camera.where.z - eyes + KneeHeight
+    local cameraMid = camera.where.z + KneeHeight - eyes
     
     for _, sec in ipairs(checkAgainst) do
-        local sector   = sectorArr[sec]
+        local sector = sectorArr[sec]
 
         for idx = 1, #sector.nodes do
             local x1 = sector:nodeAt(idx + 0).x
@@ -83,7 +83,10 @@ local function collideHorizontal(sectorArr, camera, eyes)
             local ends = WallOffset / math.sqrt(xDelta^2 + yDelta^2)
             if 0 - ends > dot or dot > 1 + ends then goto continue end
 
-            local d = {x = dot * xDelta + x1, y = dot * yDelta + y1}
+            local d = {
+                x = dot * xDelta + x1,
+                y = dot * yDelta + y1
+            }
             local dist = math.sqrt((d.x - camera.where.x)^2 + (d.y - camera.where.y)^2)
             local crossP = geo.vxp(xDelta, yDelta, pdx, pdy)
 
@@ -93,41 +96,17 @@ local function collideHorizontal(sectorArr, camera, eyes)
                 if next(neighbors) ~= nil then
                     -- Calculate local sector heights
                     local holeLow = sector:floor(d)
-                    -- geo.planeZ(
-                    --     sector.floor,
-                    --     vertexArr[collider[1].idx + 1].x,
-                    --     vertexArr[collider[1].idx + 1].y,
-                    --     dx, dy
-                    -- )
                     local holeTop = sector:ceil(d)
-                    -- geo.planeZ(
-                    --     sector.ceil,
-                    --     vertexArr[collider[1].idx + 1].x,
-                    --     vertexArr[collider[1].idx + 1].y,
-                    --     dx, dy
-                    -- )
 
                     for _, neighbor in ipairs(neighbors) do
 
                         local boundLow = math.max(
                             holeLow,
                             sectorArr[neighbor]:floor(d)
-                            -- geo.planeZ(
-                            --     sectorArr[neighbor + 1].floor,
-                            --     vertexArr[sectorArr[neighbor + 1].vertex[1].idx + 1].x,
-                            --     vertexArr[sectorArr[neighbor + 1].vertex[1].idx + 1].y,
-                            --     dx, dy
-                            -- )
                         )
                         local boundTop = math.min(
                             holeTop,
                             sectorArr[neighbor]:ceil(d)
-                            -- geo.planeZ(
-                            --     sectorArr[neighbor + 1].ceil,
-                            --     vertexArr[sectorArr[neighbor + 1].vertex[1].idx + 1].x,
-                            --     vertexArr[sectorArr[neighbor + 1].vertex[1].idx + 1].y,
-                            --     dx, dy
-                            -- )
                         )
 
                         if boundTop - boundLow >= eyes + HeadMargin and boundLow <= cameraMid and boundTop >= cameraTop then
@@ -139,8 +118,8 @@ local function collideHorizontal(sectorArr, camera, eyes)
                     end
                 end
 
-                camera.where.x = dot * xDelta + x1 - sector.walls[idx].dx * WallOffset
-                camera.where.y = dot * yDelta + y1 - sector.walls[idx].dy * WallOffset
+                camera.where.x = d.x + sector.walls[idx].dx * WallOffset
+                camera.where.y = d.y + sector.walls[idx].dy * WallOffset
             end
 
         ::continue::
@@ -167,10 +146,6 @@ mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, 
 
     updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
     collideHorizontal(sectorArr, camera, eyes)
-
-    -- Get origin
-    -- local xOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1].idx + 1].x
-    -- local yOrigin = vertexArr[sectorArr[camera.sector + 1].vertex[1].idx + 1].y
 
     collideVertical(
         {
