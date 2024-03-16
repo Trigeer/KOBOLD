@@ -7,7 +7,6 @@ local gpx = require("lib.graphicFunctions")
 local mov = require("lib.movementFunctions")
 
 -- Active data
-local vertexArr = {}
 local sectorArr = {}
 local textures  = {}
 local camera = {}

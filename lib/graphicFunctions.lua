@@ -101,11 +101,10 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
         local u1 = textures.texDim.width - 1
 
         if tz0 <= 0 or tz1 <= 0 then
-            local inter = geo.intersect(geo.intercheck(
+            local inter = geo.intersect(
                 tx0, tz0, tx1, tz1,
-                -1, 0,
-                 1, 0
-            ).uAB, tx0, tz0, tx1, tz1)
+                -1, 0, 1, 0
+            )
 
             local org0 = {x = tx0, z = tz0}
             local org1 = {x = tx1, z = tz1}
