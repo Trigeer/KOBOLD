@@ -1,6 +1,6 @@
 require("constants")
-local geo  = require("lib.geometricFunctions")
-local util = require("lib.utilities")
+local geo  = require("lib.helpers.geometricFunctions")
+local util = require("lib.helpers.utilities")
 
 local mov = {}
 
