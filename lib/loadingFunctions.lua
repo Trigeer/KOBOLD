@@ -86,7 +86,7 @@ loader.loadMapDynamics = function (path, sectors)
     local eventData = love.filesystem.load(path)()
     local eventArr = {}
 
-    for _, event in pairs(eventData) do
+    for _, event in pairs(eventData.events) do
         local eventNew = Event:new(event.flags, event.looptime, event.code)
         table.insert(eventArr, eventNew)
     end
@@ -98,7 +98,7 @@ loader.loadTriggers = function (path)
     local triggerData =  love.filesystem.load(path)()
     local triggerArr = {}
 
-    for _, trigger in pairs(triggerData) do
+    for _, trigger in pairs(triggerData.triggers) do
         local triggerNew = Trigger:new(trigger.flags, trigger.code)
         table.insert(triggerArr, triggerNew)
     end

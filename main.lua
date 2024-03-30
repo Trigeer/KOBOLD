@@ -18,7 +18,7 @@ function love.load()
     local result = lod.loadMapGeometry("maps/map0_geometry.lua")
     textures  = lod.loadMapTexturing("maps/map0_texturing.lua")
     eventsArr = lod.loadMapDynamics("maps/map0_dynamics.lua")
-    triggers  = lod.loadTriggers("maps/map0_triggers.lua")
+    triggers  = lod.loadTriggers("maps/map0_dynamics.lua")
 
     sectorArr = result[1]
     camera    = result[2]

@@ -12,7 +12,7 @@ end
 
 dynamo.checkTriggers = function (triggers, visited, camera, action)
     for _, trigger in pairs(triggers) do
-        trigger:executeTrigger(visited, camera, action, cache)
+        trigger:execute(visited, camera, action, cache)
     end
 end
 
