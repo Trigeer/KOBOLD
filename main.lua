@@ -5,28 +5,32 @@ require("constants")
 local lod = require("lib.loadingFunctions")
 local gpx = require("lib.graphicFunctions")
 local mov = require("lib.movementFunctions")
+local dyn = require("lib.dynamicFunctions")
 
 -- Active data
-local vertexArr = {}
 local sectorArr = {}
+local eventsArr = {}
 local textures  = {}
+local triggers  = {}
 local camera = {}
 
 function love.load()
     local result = lod.loadMapGeometry("maps/map0_geometry.lua")
-    textures = lod.loadMapTexturing("maps/map0_texturing.lua")
+    textures  = lod.loadMapTexturing("maps/map0_texturing.lua")
+    eventsArr = lod.loadMapDynamics("maps/map0_dynamics.lua")
+    triggers  = lod.loadTriggers("maps/map0_dynamics.lua")
 
-    vertexArr = result[1]
-    sectorArr = result[2]
-    camera = result[3]
+    sectorArr = result[1]
+    camera    = result[2]
 
     love.mouse.setRelativeMode(true)
     love.window.setMode(ScreenWidth * Scaling, ScreenHeight * Scaling)
 end
 
 function love.update(dt)
-    mov.calculateMove(
-        sectorArr, vertexArr, camera, dt,
+    dyn.executeEvents(sectorArr, eventsArr, dt)
+    local visited = mov.calculateMove(
+        sectorArr, camera, dt,
         love.keyboard.isDown("space"),
         love.keyboard.isDown("lshift"),
         love.keyboard.isDown("w"),
@@ -34,10 +38,11 @@ function love.update(dt)
         love.keyboard.isDown("a"),
         love.keyboard.isDown("d")
     )
+    dyn.checkTriggers(triggers, visited, camera, love.keyboard.isDown("e"))
 end
 
 function love.draw()
-    gpx.drawScreen(vertexArr, sectorArr, textures, camera)
+    gpx.drawScreen(sectorArr, textures, camera)
 end
 
 -- Look around

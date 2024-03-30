@@ -1,7 +1,7 @@
 -- Imports
 require("constants")
-local geo  = require("lib.geometricFunctions")
-local util = require("lib.utilities")
+local geo  = require("lib.helpers.geometricFunctions")
+local util = require("lib.helpers.utilities")
 
 local graphics = {}
 
@@ -17,11 +17,11 @@ end
 
 -- Draw scaled pixel
 local function drawPixel(x, y, color)
-    local red   = color[1] / 255
-    local green = color[2] / 255
-    local blue  = color[3] / 255
+    local R = color[1] / 255
+    local G = color[2] / 255
+    local B = color[3] / 255
 
-    love.graphics.setColor(red, green, blue)
+    love.graphics.setColor(R, G, B)
     love.graphics.rectangle(
         "fill",
         x * Scaling,
@@ -52,43 +52,40 @@ local function vline2(x, yTop, yLow, texBoundTop, texBoundLow, tex, txtx, shade,
     for y = yTop, yLow do
         -- Texture scaling calculations
         local txty = util.scalerNext(ty)
-        local r, g, b, _ = tex.sheet:getPixel(
+        local R, G, B, _ = tex.sheet:getPixel(
             -- TODO: Fix UV mapping
             (tex.cords.i * tex.dim.width)  + (txtx * tex.cords.u) % tex.dim.width,
             (tex.cords.j * tex.dim.height) + (txty * tex.cords.v) % tex.dim.height
         )
 
         -- For ease of testing textures have been turned off
-        r = 0.5
-        g = 0.5
-        b = 0.5
+        
+        R = 0.5
+        G = 0.5
+        B = 0.5
 
         drawPixel(x, y, {
-            math.max(r * 255 - shade * ShadowIntensity, 0),
-            math.max(g * 255 - shade * ShadowIntensity, 0),
-            math.max(b * 255 - shade * ShadowIntensity, 0)
+            math.max(R * 255 - shade * ShadowIntensity, 0),
+            math.max(G * 255 - shade * ShadowIntensity, 0),
+            math.max(B * 255 - shade * ShadowIntensity, 0)
         })
     end
 end
 
-local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, depth)
+local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
     local sector = sectors[now.sector]
 
     local camCos = math.cos(camera.angle)
     local camSin = math.sin(camera.angle)
 
-    -- Save sector's origin
-    local xOrigin = verteces[sector.vertex[1].idx + 1].x - camera.where.x
-    local zOrigin = verteces[sector.vertex[1].idx + 1].y - camera.where.y
-
     -- Render each wall
-    for s = 1, #sector.vertex - 1 do
+    for s = 1, #sector.nodes do
  
         -- Obtain the coordinates of 2 endpoints of rendered edge
-        local vx0 = verteces[sector.vertex[s + 0].idx + 1].x - camera.where.x
-        local vy0 = verteces[sector.vertex[s + 0].idx + 1].y - camera.where.y
-        local vx1 = verteces[sector.vertex[s + 1].idx + 1].x - camera.where.x
-        local vy1 = verteces[sector.vertex[s + 1].idx + 1].y - camera.where.y
+        local vx0 = sector:nodeAt(s + 0).x - camera.where.x
+        local vy0 = sector:nodeAt(s + 0).y - camera.where.y
+        local vx1 = sector:nodeAt(s + 1).x - camera.where.x
+        local vy1 = sector:nodeAt(s + 1).y - camera.where.y
 
         -- Rotate them around camera's view
         local tx0 = vx0 * camSin - vy0 * camCos
@@ -104,11 +101,10 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
         local u1 = textures.texDim.width - 1
 
         if tz0 <= 0 or tz1 <= 0 then
-            local inter = geo.intersect(geo.intercheck(
+            local inter = geo.intersect(
                 tx0, tz0, tx1, tz1,
-                -1, 0,
-                 1, 0
-            ).uAB, tx0, tz0, tx1, tz1)
+                -1, 0, 1, 0
+            )
 
             local org0 = {x = tx0, z = tz0}
             local org1 = {x = tx1, z = tz1}
@@ -146,10 +142,10 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
         local xEnd   = math.min(x1, now.sx1)
 
         -- Obtain floor and ceiling heights, relative to camera position
-        local yCeil0  = geo.planeZ(sector.ceil,  xOrigin, zOrigin, vx0, vy0) - camera.where.z
-        local yFloor0 = geo.planeZ(sector.floor, xOrigin, zOrigin, vx0, vy0) - camera.where.z
-        local yCeil1  = geo.planeZ(sector.ceil,  xOrigin, zOrigin, vx1, vy1) - camera.where.z
-        local yFloor1 = geo.planeZ(sector.floor, xOrigin, zOrigin, vx1, vy1) - camera.where.z
+        local yCeil0  = sector:ceil (sector:nodeAt(s + 0)) - camera.where.z
+        local yFloor0 = sector:floor(sector:nodeAt(s + 0)) - camera.where.z
+        local yCeil1  = sector:ceil (sector:nodeAt(s + 1)) - camera.where.z
+        local yFloor1 = sector:floor(sector:nodeAt(s + 1)) - camera.where.z
 
         -- Choose texture bounds
         local tyCeil  = math.max(yCeil0,  yCeil1)
@@ -174,24 +170,20 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
         )
 
         -- Neighbor ceiling and floor
-        local neighbor     = sector.neighbor[s]
+        local neighbor     = sector.links[s]
         local nCeilInt     = {}
         local nFloorInt    = {}
         local nTexCeilInt  = {}
         local nTexFloorInt = {}
         if next(neighbor) ~= nil then
 
-            for idx, n in pairs(neighbor) do
-
-                -- Get neighbor's origin
-                local nxOrigin = verteces[sectors[n + 1].vertex[1].idx + 1].x - camera.where.x
-                local nzOrigin = verteces[sectors[n + 1].vertex[1].idx + 1].y - camera.where.y
+            for idx, n in ipairs(neighbor) do
                
                 -- Obtain floor and ceiling heights, relative to camera position
-                local vnCeil0  = geo.planeZ(sectors[n + 1].ceil,  nxOrigin, nzOrigin, vx0, vy0) - camera.where.z
-                local vnFloor0 = geo.planeZ(sectors[n + 1].floor, nxOrigin, nzOrigin, vx0, vy0) - camera.where.z
-                local vnCeil1  = geo.planeZ(sectors[n + 1].ceil,  nxOrigin, nzOrigin, vx1, vy1) - camera.where.z
-                local vnFloor1 = geo.planeZ(sectors[n + 1].floor, nxOrigin, nzOrigin, vx1, vy1) - camera.where.z
+                local vnCeil0  = sectors[n]:ceil (sector:nodeAt(s + 0)) - camera.where.z
+                local vnFloor0 = sectors[n]:floor(sector:nodeAt(s + 0)) - camera.where.z
+                local vnCeil1  = sectors[n]:ceil (sector:nodeAt(s + 1)) - camera.where.z
+                local vnFloor1 = sectors[n]:floor(sector:nodeAt(s + 1)) - camera.where.z
 
                 -- Choose texture bounds
                 local tvnCeil  = math.min(vnCeil0,  vnCeil1)
@@ -312,9 +304,9 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
         if next(neighbor) ~= nil and xEnd > xBegin and depth >= 0 then
             for idx = 1, #neighbor do
                 drawSector(
-                verteces, sectors, textures, camera,
+                sectors, textures, camera,
                 {
-                    sector = neighbor[idx] + 1,
+                    sector = neighbor[idx],
                     sx0 = xBegin,
                     sx1 = xEnd
                 },
@@ -329,7 +321,7 @@ local function drawSector(verteces, sectors, textures, camera, now, yTop, yLow, 
     
 end
 
-graphics.drawScreen = function (verteces, sectors, textures, camera)
+graphics.drawScreen = function (sectors, textures, camera)
     -- Prepare screen bounds
     local yTop = {{}}
     local yLow = {{}}
@@ -340,9 +332,9 @@ graphics.drawScreen = function (verteces, sectors, textures, camera)
 
     -- Begin from camera
     drawSector(
-        verteces, sectors, textures, camera,
+        sectors, textures, camera,
         {
-            sector = camera.sector + 1,
+            sector = camera.sector,
             sx0 = 0,
             sx1 = ScreenWidth - 1
         },

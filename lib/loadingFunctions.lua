@@ -1,6 +1,10 @@
 -- Imports
+
 require("constants")
-local geo = require("lib.geometricFunctions")
+local Sector        = require("metatables.sector")
+local SlantedSector = require("metatables.slantedSector")
+local Event         = require("metatables.event")
+local Trigger       = require("metatables.trigger")
 
 local loader = {}
 
@@ -9,32 +13,47 @@ loader.loadMapGeometry = function (path)
 
     -- Flatten the vertex table
     local vertexArr = {}
-    for _, vertex in pairs(mapData.vertex) do
+    for _, vertex in ipairs(mapData.nodes) do
         local y = vertex.y
-        for _, x in pairs(vertex.x) do
+        for _, x in ipairs(vertex.x) do
             table.insert(vertexArr, {x = x, y = y})
         end
     end
 
-    -- Prepare the sector data and colliders
-    local sectorArr = mapData.sector
-    for sidx, sector in pairs(sectorArr) do
-        -- Loop the sector
-        table.insert(sectorArr[sidx].vertex, 1, sector.vertex[#sector.vertex])
-
-        -- Prepare normalized collider direction
-        for idx = 1, #sector.vertex - 1 do
-            local xOff = vertexArr[sector.vertex[idx + 1] + 1].x - vertexArr[sector.vertex[idx] + 1].x
-            local yOff = vertexArr[sector.vertex[idx + 1] + 1].y - vertexArr[sector.vertex[idx] + 1].y
-
-            local wallLen = math.sqrt(xOff^2 + yOff^2)
-            local wallSin =  yOff / wallLen
-            local wallCos = -xOff / wallLen
-
-            local copy = sector.vertex[idx]
-            sectorArr[sidx].vertex[idx] = {idx = copy, dx = wallSin, dy = wallCos}
+    -- Prepare the sector data
+    local sectorArr = {}
+    for _, sector in ipairs(mapData.sector) do
+        -- Translate nodes to points
+        local nodes = {}
+        for _, node in ipairs(sector.nodes) do
+            table.insert(nodes, vertexArr[node + 1])
         end
-        sectorArr[sidx].vertex[#sector.vertex] = {idx = sector.vertex[#sector.vertex]}
+
+        -- Reindex links
+        local links = sector.links
+        for i, wall in ipairs(links) do
+            for j, link in ipairs(wall) do
+                links[i][j] = link + 1
+            end
+        end
+
+        if sector.slanted then
+            local ceil  = sector.ceil
+            local floor = sector.floor
+            table.insert(sectorArr, SlantedSector:new(
+                nodes,
+                links,
+                {height = ceil[1],  dx = ceil[2],  dy = ceil[3]},
+                {height = floor[1], dx = floor[2], dy = floor[3]}
+            ))
+        else
+            table.insert(sectorArr, Sector:new(
+                nodes,
+                links,
+                sector.ceil,
+                sector.floor
+            ))
+        end
     end
     
     -- Initialize the player data
@@ -43,10 +62,10 @@ loader.loadMapGeometry = function (path)
         where = {
             x = p.x,
             y = p.y,
-            z = geo.planeZ(sectorArr[p.sector + 1].floor, 0, 0, p.x, p.y) + EyeHeight + 1e-5
+            z = sectorArr[p.sector + 1]:floor(p) + EyeHeight + 1e-5
         },
         angle  = p.angle,
-        sector = p.sector,
+        sector = p.sector + 1,
         pitch  = 0,
 
         -- Control values
@@ -54,14 +73,37 @@ loader.loadMapGeometry = function (path)
         grounded = false
     }
 
-    return {vertexArr, sectorArr, camera}
-
+    return {sectorArr, camera}
 end
 
 loader.loadMapTexturing = function (path)
     local textureData = love.filesystem.load(path)()
     local texture = love.image.newImageData(textureData.texFile)
     return {sheet = texture, texDim = textureData.texDim, sector = textureData.sector}
+end
+
+loader.loadMapDynamics = function (path, sectors)
+    local eventData = love.filesystem.load(path)()
+    local eventArr = {}
+
+    for _, event in pairs(eventData.events) do
+        local eventNew = Event:new(event.flags, event.looptime, event.code)
+        table.insert(eventArr, eventNew)
+    end
+
+    return eventArr
+end
+
+loader.loadTriggers = function (path)
+    local triggerData =  love.filesystem.load(path)()
+    local triggerArr = {}
+
+    for _, trigger in pairs(triggerData.triggers) do
+        local triggerNew = Trigger:new(trigger.flags, trigger.code)
+        table.insert(triggerArr, triggerNew)
+    end
+
+    return triggerArr
 end
 
 return loader
