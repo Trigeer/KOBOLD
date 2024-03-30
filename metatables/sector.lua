@@ -1,6 +1,5 @@
 -- Sectors geometry data and map graph linking
 --
--- Methods are indexed from zero
 local Sector = {
     -- List of xy coordinates of sector verteces
     nodes = {},
@@ -47,13 +46,14 @@ end
 
 -- Set new value for given node
 function Sector:nodeSet (index, x, y)
-    index = ((index - 2) % #self.nodes) + 1
+    local indexCur = ((index - 2) % #self.nodes) + 1
+    local indexMin = ((index - 3) % #self.nodes) + 1
 
-    self.nodes[index].x = x
-    self.nodes[index].y = y
+    self.nodes[indexCur].x = x
+    self.nodes[indexCur].y = y
 
-    self:calculateWall(index)
-    self:calculateWall(index - 1)
+    self:calculateWall(indexCur)
+    self:calculateWall(indexMin)
 end
 
 -- Return ceiling height

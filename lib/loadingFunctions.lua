@@ -3,6 +3,7 @@
 require("constants")
 local Sector        = require("metatables.sector")
 local SlantedSector = require("metatables.slantedSector")
+local Event         = require("metatables.event")
 
 local loader = {}
 
@@ -85,23 +86,8 @@ loader.loadMapDynamics = function (path, sectors)
     local eventArr = {}
 
     for _, event in pairs(eventData) do
-        if event.type == 0 then
-            event.affected = {}
-            for sidx, sector in pairs(sectors) do
-                local points = {}
-                for vidx = 1, #sector.vertex - 1 do
-                    for _, point in pairs(event.group) do
-                        if sector.vertex[vidx] == point then
-                            table.insert(points, vidx)
-                        end
-                    end
-                end
-                if next(points) ~= nil then
-                    table.insert(event.affected, {val = sidx, points = points})
-                end
-            end
-        end
-        table.insert(eventArr, event)
+        local eventNew = Event:new(event.flags, event.looptime, event.code)
+        table.insert(eventArr, eventNew)
     end
 
     return eventArr

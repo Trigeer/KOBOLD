@@ -16,7 +16,7 @@ local camera = {}
 function love.load()
     local result = lod.loadMapGeometry("maps/map0_geometry.lua")
     textures = lod.loadMapTexturing("maps/map0_texturing.lua")
-    eventsArr = lod.loadMapDynamics("maps/map0_dynamics.lua", result[2])
+    eventsArr = lod.loadMapDynamics("maps/map0_dynamics.lua")
 
     sectorArr = result[1]
     camera    = result[2]
@@ -26,7 +26,7 @@ function love.load()
 end
 
 function love.update(dt)
-    dyn.executeEvents(vertexArr, sectorArr, camera, eventsArr, dt)
+    dyn.executeEvents(sectorArr, eventsArr, dt)
     mov.calculateMove(
         sectorArr, camera, dt,
         love.keyboard.isDown("space"),
