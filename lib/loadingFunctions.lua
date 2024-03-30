@@ -4,6 +4,7 @@ require("constants")
 local Sector        = require("metatables.sector")
 local SlantedSector = require("metatables.slantedSector")
 local Event         = require("metatables.event")
+local Trigger       = require("metatables.trigger")
 
 local loader = {}
 
@@ -91,6 +92,18 @@ loader.loadMapDynamics = function (path, sectors)
     end
 
     return eventArr
+end
+
+loader.loadTriggers = function (path)
+    local triggerData =  love.filesystem.load(path)()
+    local triggerArr = {}
+
+    for _, trigger in pairs(triggerData) do
+        local triggerNew = Trigger:new(trigger.flags, trigger.code)
+        table.insert(triggerArr, triggerNew)
+    end
+
+    return triggerArr
 end
 
 return loader

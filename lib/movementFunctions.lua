@@ -132,6 +132,8 @@ local function collideHorizontal(sectorArr, camera, eyes)
             break
         end
     end
+
+    return checkAgainst
 end
 
 mov.moveCamera = function (camera, xDelta, yDelta)
@@ -145,8 +147,8 @@ mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, 
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
     updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
-    collideHorizontal(sectorArr, camera, eyes)
 
+    local visited = collideHorizontal(sectorArr, camera, eyes)
     collideVertical(
         {
             floor = sectorArr[camera.sector]:floor(camera.where),
@@ -154,6 +156,8 @@ mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, 
         },
         camera, timeDelta * 60, eyes
     )
+
+    return visited
 end
 
 return mov

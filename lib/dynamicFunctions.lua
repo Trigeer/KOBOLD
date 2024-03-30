@@ -10,4 +10,10 @@ dynamo.executeEvents = function (sectors, events, dt)
     end
 end
 
+dynamo.checkTriggers = function (triggers, visited, camera, action)
+    for _, trigger in pairs(triggers) do
+        trigger:executeTrigger(visited, camera, action, cache)
+    end
+end
+
 return dynamo

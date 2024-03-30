@@ -9,6 +9,16 @@ local map0 = {
         
             end
         }
+    },
+    triggers = {
+        {
+            flags = {},
+            code = function (visited, camera, flags, cache)
+                
+                -- Magick here
+
+            end
+        }
     }
 }
 
