@@ -5,8 +5,10 @@ local cache = {}
 
 dynamo.executeEvents = function (sectors, events, dt)
     for _, event in pairs(events) do
-        event:advanceClock(dt)
-        event:execute(sectors, cache)
+        if event.enabled then
+            event:advanceClock(dt)
+            event:execute(sectors, cache)
+        end
     end
 end
 

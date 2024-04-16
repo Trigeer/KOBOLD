@@ -47,16 +47,16 @@ local function vline2(x, yTop, yLow, texBoundTop, texBoundLow, tex, txtx, shade,
     yTop = geo.clamp(yTop, boundTop, boundLow) + 1
     yLow = geo.clamp(yLow, boundTop, boundLow) - 1
 
-    local ty = util.scalerInit(texBoundTop, yTop, texBoundLow, 0, tex.dim.height - 1)
+    -- local ty = util.scalerInit(texBoundTop, yTop, texBoundLow, 0, tex.dim.height - 1)
 
     for y = yTop, yLow do
         -- Texture scaling calculations
-        local txty = util.scalerNext(ty)
-        local R, G, B, _ = tex.sheet:getPixel(
-            -- TODO: Fix UV mapping
-            (tex.cords.i * tex.dim.width)  + (txtx * tex.cords.u) % tex.dim.width,
-            (tex.cords.j * tex.dim.height) + (txty * tex.cords.v) % tex.dim.height
-        )
+        -- local txty = util.scalerNext(ty)
+        -- local R, G, B, _ = tex.sheet:getPixel(
+        --     -- TODO: Fix UV mapping
+        --     (tex.cords.i * tex.dim.width)  + (txtx * tex.cords.u) % tex.dim.width,
+        --     (tex.cords.j * tex.dim.height) + (txty * tex.cords.v) % tex.dim.height
+        -- )
 
         -- For ease of testing textures have been turned off
         

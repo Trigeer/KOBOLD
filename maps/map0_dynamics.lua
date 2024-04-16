@@ -3,6 +3,8 @@ local map0 = {
         {
             flags    = {},
             loopTime = 0,
+            enabled = false,
+            looping = false,
             code = function (sectors, clock, flags, cache)
         
                 -- Magick here

@@ -1,10 +1,11 @@
 -- Imports
 
 require("constants")
-local Sector        = require("metatables.sector")
-local SlantedSector = require("metatables.slantedSector")
-local Event         = require("metatables.event")
-local Trigger       = require("metatables.trigger")
+local Sector          = require("metatables.sector")
+local SlantedSector   = require("metatables.slantedSector")
+local Event           = require("metatables.event")
+local NonLoopingEvent = require("metatables.nonLoopingEvent")
+local Trigger         = require("metatables.trigger")
 
 local loader = {}
 
@@ -87,8 +88,11 @@ loader.loadMapDynamics = function (path, sectors)
     local eventArr = {}
 
     for _, event in pairs(eventData.events) do
-        local eventNew = Event:new(event.flags, event.looptime, event.code)
-        table.insert(eventArr, eventNew)
+        if event.looping then
+            table.insert(eventArr, Event:new(event.flags, event.enabled, event.loopTime, event.code))
+        else
+            table.insert(eventArr, NonLoopingEvent:new(event.flags, event.enabled, event.loopTime, event.code))
+        end
     end
 
     return eventArr

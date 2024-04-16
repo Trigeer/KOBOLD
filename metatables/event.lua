@@ -1,20 +1,22 @@
 -- Dynamic scripted events
 --
 local Event = {
-    flags = {},
-    clock = 0,
-    loop  = 0,
+    flags   = {},
+    enabled = true,
+    clock   = 0,
+    loop    = 0,
     code = function (sectors, clock, flags, cache)
         print("Empty...")
     end
 }
 
 -- Create new sector
-function Event:new (flags, loop, code)
+function Event:new (flags, enabled, loop, code)
     local event = {
-        flags = flags or {},
-        loop  = loop  or 0,
-        code  = code  or nil
+        flags   = flags or {},
+        enabled = enabled or true,
+        loop    = loop  or 0,
+        code    = code  or nil
     }
 
     setmetatable(event, self)
