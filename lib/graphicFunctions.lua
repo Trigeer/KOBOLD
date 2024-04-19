@@ -72,6 +72,51 @@ local function vline2(x, yTop, yLow, texBoundTop, texBoundLow, tex, txtx, shade,
     end
 end
 
+local function drawSprite(entity, camera, now, yTop, yLow)
+    local camCos = math.cos(camera.angle)
+    local camSin = math.sin(camera.angle)
+    
+    local vx = entity.where.x - camera.where.x
+    local vy = entity.where.y - camera.where.y
+
+    local tx = vx * camSin - vy * camCos
+    local tz = vx * camCos + vy * camSin
+
+    -- Only render if at least partially in front of the camera
+    if tz <= 0 then return end
+
+    -- Perspective transformation
+    local xScale = (ScreenWidth  * Hfov) / tz
+    local yScale = (ScreenHeight * Vfov) / tz
+    local x = ScreenWidth / 2 - math.floor(tx * xScale)
+
+    -- Obtain floor and ceiling heights, relative to camera position
+    -- TODO: Add crouch detection
+    local yHead = entity.where.z - camera.where.z + HeadMargin
+    local yFeet = entity.where.z - camera.where.z - EyeHeight
+
+    -- Project ceiling and floor heights onto screen y-coordinate
+    local head = ScreenHeight / 2 - math.floor((yHead + tz * camera.pitch) * yScale)
+    local feet = ScreenHeight / 2 - math.floor((yFeet + tz * camera.pitch) * yScale)
+
+    local height = head - feet
+    local width  = math.floor(height / 3)
+
+    local x0 = x + width
+    local x1 = x - width
+
+    -- Only render if visible
+    if x1 < now.sx0 or x0 > now.sx1 then return end
+
+    -- x bounds
+    local xBegin = math.max(x0, now.sx0)
+    local xEnd   = math.min(x1, now.sx1)
+
+    for xIter = xBegin, xEnd do
+        vline(xIter, head, feet, {255, 0, 0}, yTop[1][xIter + 1], yLow[1][xIter + 1])
+    end
+end
+
 local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
     local sector = sectors[now.sector]
 
@@ -342,7 +387,11 @@ graphics.drawScreen = function (sectors, textures, camera)
         RenderDepth
     )
 
+    drawSprite({where = {x = 10, y = 2.5, z = 6}}, camera, {sx0 = 0, sx1 = ScreenWidth - 1}, yTop, yLow)
+
     drawCenteredText(540, 10, 30, 25, camera.sector)
+    drawCenteredText(520, 45, 30, 25, camera.where.x)
+    drawCenteredText(520, 75, 30, 25, camera.where.y)
 end
 
 return graphics
