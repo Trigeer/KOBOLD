@@ -8,6 +8,9 @@ local Sector = {
     -- List of neighboring sectors per wall
     links = {},
 
+    -- I regret this so much
+    precalcs = {},
+
     -- Ceiling height
     topPlane    = 0,
     -- Floor height
@@ -20,6 +23,8 @@ function Sector:new (nodes, links, ceil, floor)
         nodes = nodes or {},
         walls = {},
         links = links or {},
+
+        precalcs = {},
 
         topPlane    = ceil or 0,
         bottomPlane = floor or 0
