@@ -39,7 +39,7 @@ local map0 = {
       {slanted = false, floor = 0,  ceil = 20, nodes = {29, 30, 32, 40, 49},         links = {{0}, {11}, {12}, {}, {2}}},
       {slanted = false, floor = 16, ceil = 36, nodes = {1, 6, 5, 0},                 links = {{}, {7}, {}, {24}}},
       {slanted = false, floor = 16, ceil = 36, nodes = {0, 5, 25, 27, 45, 51},       links = {{}, {23}, {}, {9}, {}, {8}}},
-      {slanted = false, floor = 10, ceil = 12, nodes = {16, 20, 35, 31},             links = {{}, {}, {3}, {}}},
+      {slanted = false, floor = 10, ceil = 12, nodes = {16, 20, 35, 31},             links = {{}, {}, {3}, {}}}
     },
     player = {x = 3, y = 9, angle = 0.4, sector = 0}
   }

@@ -25,9 +25,11 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     local decay = DecayTop
     if w or s or a or d then decay = DecayLow end
 
+    local d = (decay - decay^timeDelta) / (1 - decay);
+
     -- New velocity
-    camera.velocity.x = (camera.velocity.x * decay + moveVector.x * Speed) * timeDelta
-    camera.velocity.y = (camera.velocity.y * decay + moveVector.y * Speed) * timeDelta
+    camera.velocity.x = camera.velocity.x * decay^timeDelta + moveVector.x * Speed * d;
+    camera.velocity.y = camera.velocity.y * decay^timeDelta + moveVector.y * Speed * d;
 end
 
 -- Bounds indicate floor and ceiling height

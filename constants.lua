@@ -18,9 +18,9 @@ EyeHeight  = 6      -- Height of camera by default
 DuckHeight = 2.5    -- Height of camera when crouched
 HeadMargin = 1      -- Bumping margin above camera
 KneeHeight = 2      -- Max height of step
-Speed      = 0.02   -- Speed modifier
-DecayLow   = 0.85   -- Speed percentage retained when moving
-DecayTop   = 0.6    -- Speed percentage retained when not moving
+Speed      = 0.05   -- Speed modifier
+DecayLow   = 0.95   -- Speed percentage retained when moving
+DecayTop   = 0.85    -- Speed percentage retained when not moving
 WallOffset = 0.5    -- Camera collider radius
 
 RenderDepth = 10

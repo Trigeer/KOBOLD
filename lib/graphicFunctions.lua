@@ -275,6 +275,9 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
 
         for x = xBegin, xEnd do
             -- Calculate this points z-coordinate for shading
+
+            -- local shader = math.floor((((ScreenWidth / 2) - x) / (ScreenWidth * Hfov)) * 10) * 8
+
             local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
             local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
             local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
@@ -376,11 +379,11 @@ end
 graphics.drawScreen = function (sectors, entities, textures, camera)
     -- Prepare sprites
     -- TODO: sorting by depth
-    for i = 1, #entities do
-        local precalc = precalcSprite(entities[i], camera)
+    for idx, ent in ipairs(entities) do
+        local precalc = precalcSprite(ent, camera)
         if precalc then
-            precalc.idx = i
-            table.insert(sectors[entities[i].sector].precalcs, precalc)
+            precalc.idx = idx
+            table.insert(sectors[ent.sector].precalcs, precalc)
         end 
     end
 
