@@ -1,6 +1,8 @@
 -- Imports
-
 require("constants")
+
+local luna = require("lib.dependencies.lunajson")
+
 local Sector          = require("metatables.sector")
 local SlantedSector   = require("metatables.slantedSector")
 local Event           = require("metatables.event")
@@ -10,7 +12,13 @@ local Trigger         = require("metatables.trigger")
 local loader = {}
 
 loader.loadMapGeometry = function (path)
-    local mapData = love.filesystem.load(path)()
+    -- local mapData = love.filesystem.load(path)()
+    local file = love.filesystem.read(path)
+    local mapData = luna.decode(file)
+
+    if mapData == nil then
+        error("Map not loaded...")
+    end
 
     -- Flatten the vertex table
     local vertexArr = {}
@@ -23,7 +31,7 @@ loader.loadMapGeometry = function (path)
 
     -- Prepare the sector data
     local sectorArr = {}
-    for _, sector in ipairs(mapData.sector) do
+    for _, sector in ipairs(mapData.sectors) do
         -- Translate nodes to points
         local nodes = {}
         for _, node in ipairs(sector.nodes) do

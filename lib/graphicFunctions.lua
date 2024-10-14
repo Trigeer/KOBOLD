@@ -72,7 +72,7 @@ local function vline2(x, yTop, yLow, texBoundTop, texBoundLow, tex, txtx, shade,
     end
 end
 
-local function drawSprite(entity, camera, now, yTop, yLow)
+local function precalcSprite(entity, camera)
     local camCos = math.cos(camera.angle)
     local camSin = math.sin(camera.angle)
     
@@ -106,14 +106,16 @@ local function drawSprite(entity, camera, now, yTop, yLow)
     local x1 = x - width
 
     -- Only render if visible
-    if x1 < now.sx0 or x0 > now.sx1 then return end
+    if x1 < 0 or x0 > ScreenWidth - 1 then return else return {tz = tz, head = head, feet = feet, x0 = x0, x1 = x1} end
+end
 
+local function drawSprite(precalc, now, yTop, yLow)
     -- x bounds
-    local xBegin = math.max(x0, now.sx0)
-    local xEnd   = math.min(x1, now.sx1)
+    local xBegin = math.max(precalc.x0, now.sx0)
+    local xEnd   = math.min(precalc.x1, now.sx1)
 
     for xIter = xBegin, xEnd do
-        vline(xIter, head, feet, {255, 0, 0}, yTop[1][xIter + 1], yLow[1][xIter + 1])
+        vline(xIter, precalc.head, precalc.feet, {255, 0, 0}, yTop[1][xIter + 1], yLow[1][xIter + 1])
     end
 end
 
@@ -273,6 +275,9 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
 
         for x = xBegin, xEnd do
             -- Calculate this points z-coordinate for shading
+
+            -- local shader = math.floor((((ScreenWidth / 2) - x) / (ScreenWidth * Hfov)) * 10) * 8
+
             local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
             local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
             local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
@@ -349,16 +354,21 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
         if next(neighbor) ~= nil and xEnd > xBegin and depth >= 0 then
             for idx = 1, #neighbor do
                 drawSector(
-                sectors, textures, camera,
-                {
-                    sector = neighbor[idx],
-                    sx0 = xBegin,
-                    sx1 = xEnd
-                },
-                {yTop[idx + 1]}, {yLow[idx + 1]},
-                depth - 1
-            )
+                    sectors, textures, camera,
+                    {
+                        sector = neighbor[idx],
+                        sx0 = xBegin,
+                        sx1 = xEnd
+                    },
+                    {yTop[idx + 1]}, {yLow[idx + 1]},
+                    depth - 1
+                )
             end
+        end
+
+        -- Draw sprites
+        for i = 1, #sector.precalcs do
+            drawSprite(sector.precalcs[i], now, yTop, yLow)
         end
 
         ::continue::
@@ -366,7 +376,17 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
     
 end
 
-graphics.drawScreen = function (sectors, textures, camera)
+graphics.drawScreen = function (sectors, entities, textures, camera)
+    -- Prepare sprites
+    -- TODO: sorting by depth
+    for idx, ent in ipairs(entities) do
+        local precalc = precalcSprite(ent, camera)
+        if precalc then
+            precalc.idx = idx
+            table.insert(sectors[ent.sector].precalcs, precalc)
+        end 
+    end
+
     -- Prepare screen bounds
     local yTop = {{}}
     local yLow = {{}}
@@ -387,11 +407,16 @@ graphics.drawScreen = function (sectors, textures, camera)
         RenderDepth
     )
 
-    drawSprite({where = {x = 10, y = 2.5, z = 6}}, camera, {sx0 = 0, sx1 = ScreenWidth - 1}, yTop, yLow)
+    -- drawSprite({where = {x = 10, y = 2.5, z = 6}}, camera, {sx0 = 0, sx1 = ScreenWidth - 1}, yTop, yLow)
 
     drawCenteredText(540, 10, 30, 25, camera.sector)
     drawCenteredText(520, 45, 30, 25, camera.where.x)
     drawCenteredText(520, 75, 30, 25, camera.where.y)
+
+    -- Cleanup
+    for i = 1, #sectors do
+        sectors[i].precalcs = {}
+    end
 end
 
 return graphics

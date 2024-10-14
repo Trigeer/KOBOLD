@@ -5,44 +5,129 @@ require("constants")
 local lod = require("lib.loadingFunctions")
 local gpx = require("lib.graphicFunctions")
 local mov = require("lib.movementFunctions")
-local dyn = require("lib.dynamicFunctions")
+-- local dyn = require("lib.dynamicFunctions")
+local net = require("lib.networkingFunctions")
 
 -- Active data
 local sectorArr = {}
-local eventsArr = {}
+-- local eventsArr = {}
 local textures  = {}
-local triggers  = {}
+-- local triggers  = {}
 local camera = {}
 
+local dummy = {}
+local mode
+
 function love.load()
-    local result = lod.loadMapGeometry("maps/map0_geometry.lua")
+    print("Select mode:")
+    print("  1 for Online")
+    print("  2 for Offline")
+    io.write("console> ")
+    local modeNum = io.read("*n")
+
+    if modeNum == 1 then
+        mode = false
+    elseif modeNum == 2 then
+        mode = true
+    else
+        error("Illegal mode...")
+    end
+
+    local result = lod.loadMapGeometry("maps/map0_geometry.json")
     textures  = lod.loadMapTexturing("maps/map0_texturing.lua")
-    eventsArr = lod.loadMapDynamics("maps/map0_dynamics.lua")
-    triggers  = lod.loadTriggers("maps/map0_dynamics.lua")
+    -- eventsArr = lod.loadMapDynamics("maps/map0_dynamics.lua")
+    -- triggers  = lod.loadTriggers("maps/map0_dynamics.lua")
 
     sectorArr = result[1]
     camera    = result[2]
+
+    if mode then
+        net.connect("on-coupled.gl.at.ply.gg", 44735, "qwerty")
+        net.send(0, {ws = 0, ad = 0}, false, camera.angle)
+    end
+
+    -- dummy = {
+    --     where = {
+    --         x = 10,
+    --         y = 2.5,
+    --         z = sectorArr[22]:floor({x = 10, y = 2.5}) + EyeHeight + 1e-5
+    --     },
+    --     angle  = 0,
+    --     sector = 22,
+    --     pitch  = 0,
+    
+    --     -- Control values
+    --     velocity = {x = 0, y = 0, z = 0},
+    --     grounded = false
+    -- }
 
     love.mouse.setRelativeMode(true)
     love.window.setMode(ScreenWidth * Scaling, ScreenHeight * Scaling)
 end
 
 function love.update(dt)
-    dyn.executeEvents(sectorArr, eventsArr, dt)
-    local visited = mov.calculateMove(
-        sectorArr, camera, dt,
-        love.keyboard.isDown("space"),
-        love.keyboard.isDown("lshift"),
-        love.keyboard.isDown("w"),
-        love.keyboard.isDown("s"),
-        love.keyboard.isDown("a"),
-        love.keyboard.isDown("d")
-    )
-    dyn.checkTriggers(triggers, visited, camera, love.keyboard.isDown("e"))
+    -- dyn.executeEvents(sectorArr, eventsArr, dt)
+
+    if mode then
+        local w = love.keyboard.isDown("w")
+        local s = love.keyboard.isDown("s")
+        local a = love.keyboard.isDown("a")
+        local d = love.keyboard.isDown("d")
+
+        local mod = {ws = 0, ad = 0}
+        if w and not s then mod.ws = 1 elseif not w and s then mod.ws = -1 end
+        if a and not d then mod.ad = 1 elseif not a and d then mod.ad = -1 end
+
+        local response, uuid = net.receive()
+        net.send(dt, mod, love.keyboard.isDown("space"), camera.angle)
+
+        dummy = {}
+
+        if response then
+            for index, value in ipairs(response) do
+                if index == uuid then
+                    camera.where.x = value.x
+                    camera.where.y = value.y
+                    camera.where.z = value.z
+                    camera.sector  = value.sector + 1
+                elseif value.enabled then
+                    table.insert(dummy, {
+                        where = {
+                            x = value.x,
+                            y = value.y,
+                            z = value.z
+                        },
+                        sector = value.sector + 1
+                    })
+                end
+            end
+        end
+    else
+        local visited = mov.calculateMove(
+            sectorArr, camera, dt,
+            love.keyboard.isDown("space"),
+            love.keyboard.isDown("lshift"),
+            love.keyboard.isDown("w"),
+            love.keyboard.isDown("s"),
+            love.keyboard.isDown("a"),
+            love.keyboard.isDown("d")
+        )
+    end
+
+    -- mov.calculateMove(
+    --     sectorArr, dummy, dt,
+    --     love.keyboard.isDown("o"),
+    --     love.keyboard.isDown("p"),
+    --     love.keyboard.isDown("up"),
+    --     love.keyboard.isDown("down"),
+    --     love.keyboard.isDown("left"),
+    --     love.keyboard.isDown("right")
+    -- )
+    -- dyn.checkTriggers(triggers, visited, camera, love.keyboard.isDown("e"))
 end
 
 function love.draw()
-    gpx.drawScreen(sectorArr, textures, camera)
+    gpx.drawScreen(sectorArr, dummy, textures, camera)
 end
 
 -- Look around
@@ -52,10 +137,15 @@ end
 
 -- Crouching (and mouse release)
 function love.keypressed(key, scancode, isrepeat)
-    if key == "lshift" then camera.grounded = false end
+    -- if key == "lshift" then camera.grounded = false end
     if key == "escape" then love.mouse.setRelativeMode(false) end
 end
 
 function love.keyreleased(key, scancode, isrepeat)
-    if key == "lshift" then camera.grounded = false end
+    -- if key == "lshift" then camera.grounded = false end
+end
+
+function love.quit()
+    -- net.close()
+    return false
 end
