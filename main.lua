@@ -5,14 +5,14 @@ require("constants")
 local lod = require("lib.loadingFunctions")
 local gpx = require("lib.graphicFunctions")
 local mov = require("lib.movementFunctions")
--- local dyn = require("lib.dynamicFunctions")
+local dyn = require("lib.dynamicFunctions")
 local net = require("lib.networkingFunctions")
 
 -- Active data
 local sectorArr = {}
--- local eventsArr = {}
+local eventsArr = {}
 local textures  = {}
--- local triggers  = {}
+local triggers  = {}
 local camera = {}
 
 local dummy = {}
@@ -26,16 +26,16 @@ function love.load()
     local modeNum = io.read("*n")
 
     if modeNum == 1 then
-        mode = false
-    elseif modeNum == 2 then
         mode = true
+    elseif modeNum == 2 then
+        mode = false
     else
         error("Illegal mode...")
     end
 
-    local result = lod.loadMapGeometry("maps/map0_geometry.json")
+    local result = lod.loadMapGeometry("maps/testing_ground/geometry.json")
     textures  = lod.loadMapTexturing("maps/map0_texturing.lua")
-    -- eventsArr = lod.loadMapDynamics("maps/map0_dynamics.lua")
+    triggers, eventsArr = lod.loadMapDynamics("maps/testing_ground/header.json")
     -- triggers  = lod.loadTriggers("maps/map0_dynamics.lua")
 
     sectorArr = result[1]
@@ -66,7 +66,7 @@ function love.load()
 end
 
 function love.update(dt)
-    -- dyn.executeEvents(sectorArr, eventsArr, dt)
+    dyn.executeEvents(sectorArr, eventsArr, dt)
 
     if mode then
         local w = love.keyboard.isDown("w")

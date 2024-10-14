@@ -15,8 +15,8 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     local camSin = math.sin(camera.angle)
     local camCos = math.cos(camera.angle)
     local mod = {ws = 0, ad = 0}
-    if w and not s then mod.ws = 1 elseif not w and s then mod.ws = -1 end
-    if a and not d then mod.ad = 1 elseif not a and d then mod.ad = -1 end
+    if w and not s then mod.ws = -1 elseif not w and s then mod.ws = 1 end
+    if a and not d then mod.ad = -1 elseif not a and d then mod.ad = 1 end
     local moveVector = {
         x = mod.ws * camCos + mod.ad * camSin,
         y = mod.ws * camSin - mod.ad * camCos
@@ -148,7 +148,7 @@ mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, 
     local eyes = 0
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
-    updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
+    updateVelocity(camera, timeDelta * 55, jump, w, s, a, d)
 
     local visited = collideHorizontal(sectorArr, camera, eyes)
     collideVertical(
@@ -156,7 +156,7 @@ mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, 
             floor = sectorArr[camera.sector]:floor(camera.where),
             ceil  = sectorArr[camera.sector]:ceil(camera.where)
         },
-        camera, timeDelta * 60, eyes
+        camera, timeDelta * 55, eyes
     )
 
     return visited

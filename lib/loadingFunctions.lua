@@ -6,7 +6,6 @@ local luna = require("lib.dependencies.lunajson")
 local Sector          = require("metatables.sector")
 local SlantedSector   = require("metatables.slantedSector")
 local Event           = require("metatables.event")
-local NonLoopingEvent = require("metatables.nonLoopingEvent")
 local Trigger         = require("metatables.trigger")
 
 local loader = {}
@@ -91,31 +90,46 @@ loader.loadMapTexturing = function (path)
     return {sheet = texture, texDim = textureData.texDim, sector = textureData.sector}
 end
 
-loader.loadMapDynamics = function (path, sectors)
-    local eventData = love.filesystem.load(path)()
+loader.loadMapDynamics = function (path)
+    local file = love.filesystem.read(path)
+    local eventData = luna.decode(file)
+
+    if eventData == nil then
+        error("Events not loaded...")
+    end
+
+    local triggArr = {}
     local eventArr = {}
 
-    for _, event in pairs(eventData.events) do
-        if event.looping then
-            table.insert(eventArr, Event:new(event.flags, event.enabled, event.loopTime, event.code))
+    for _, src in ipairs(eventData.sources) do
+        local func, err = loadfile(src)
+
+        if not func then
+            print("Error: " .. err)
         else
-            table.insert(eventArr, NonLoopingEvent:new(event.flags, event.enabled, event.loopTime, event.code))
+            func()
         end
     end
 
-    return eventArr
-end
+    for _, event in pairs(eventData.functions) do
+        if _G[event.name] then
+            if event.type == "event" then
+                table.insert(eventArr, Event:new(
+                    event.enabled,
+                    event.looping,
+                    event.loop,
+                    _G[event.name]
+                ))
+            else
+                print("Not supported...")
+                -- table.insert(triggArr, Trigger:new(
 
-loader.loadTriggers = function (path)
-    local triggerData =  love.filesystem.load(path)()
-    local triggerArr = {}
-
-    for _, trigger in pairs(triggerData.triggers) do
-        local triggerNew = Trigger:new(trigger.flags, trigger.code)
-        table.insert(triggerArr, triggerNew)
+                -- ))
+            end
+        end
     end
 
-    return triggerArr
+    return triggArr, eventArr
 end
 
 return loader

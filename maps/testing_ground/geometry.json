@@ -1,0 +1,16 @@
+{
+    "nodes": [
+        {"y": 0, "x": [0, 7]},
+        {"y": 3, "x": [3, 4]},
+        {"y": 4, "x": [3, 4]},
+        {"y": 7, "x": [0, 7]}
+    ],
+    "sectors": [
+        {"slanted": false, "floor": 0, "ceil": 20, "nodes": [0, 1, 3, 2], "links": [[3], [], [1], [4]]},
+        {"slanted": false, "floor": 0, "ceil": 20, "nodes": [1, 7, 5, 3], "links": [[0], [], [2], [4]]},
+        {"slanted": false, "floor": 0, "ceil": 20, "nodes": [7, 6, 4, 5], "links": [[1], [], [3], [4]]},
+        {"slanted": false, "floor": 0, "ceil": 20, "nodes": [6, 0, 2, 4], "links": [[2], [], [0], [4]]},
+        {"slanted": false, "floor": 0, "ceil": 20, "nodes": [2, 3, 5, 4], "links": [[3], [0], [1], [2]]}
+    ],
+    "player": {"x": 3.5, "y": 1, "angle": 0.5, "sector": 0}
+}

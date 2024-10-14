@@ -1,20 +1,19 @@
 -- Dynamic scripted events
---
 local Event = {
-    flags   = {},
     enabled = true,
+    looping = true,
     clock   = 0,
     loop    = 0,
-    code = function (sectors, clock, flags, cache)
+    code = function (clock)
         print("Empty...")
     end
 }
 
 -- Create new sector
-function Event:new (flags, enabled, loop, code)
+function Event:new (enabled, looping, loop, code)
     local event = {
-        flags   = flags or {},
         enabled = enabled or true,
+        looping = looping or true,
         loop    = loop  or 0,
         code    = code  or nil
     }
@@ -26,11 +25,20 @@ function Event:new (flags, enabled, loop, code)
 end
 
 function Event:advanceClock (dt)
-    self.clock = (self.clock + dt) % self.loop
+    if self.looping then
+        self.clock = (self.clock + dt) % self.loop
+    else
+        self.clock = self.clock + dt
+    
+        if self.clock >= self.loop then
+            self.clock = self.loop
+            self.enabled = false
+        end
+    end
 end
 
-function Event:execute (sectors, cache)
-    self.code(sectors, self.clock, self.flags, cache)
+function Event:execute ()
+    return self.code(self.clock)
 end
 
 return Event
