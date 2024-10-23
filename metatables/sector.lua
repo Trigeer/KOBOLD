@@ -46,8 +46,6 @@ function Sector:new (nodes, links, ceil, floor)
         sector:calculateWall(idx)
     end
 
-    -- print(sector.walls)
-
     return sector
 end
 

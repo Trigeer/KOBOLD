@@ -1,3 +1,4 @@
+---@diagnostic disable: redundant-parameter, cast-local-type, deprecated, undefined-field
 local setmetatable, tonumber, tostring =
       setmetatable, tonumber, tostring
 local floor, inf =

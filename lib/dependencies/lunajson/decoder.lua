@@ -1,3 +1,4 @@
+---@diagnostic disable: deprecated, undefined-field
 local setmetatable, tonumber, tostring =
       setmetatable, tonumber, tostring
 local floor, inf =

@@ -1,7 +1,15 @@
 local dynamo = {}
 
 -- A tool for seperate events to exchange information
-local cache = {}
+-- local cache = {}
+
+local function executor (actions)
+    for _, action in ipairs(actions) do
+        -- if action.type == "sector" then
+        --     sectors[action.locate.index + 1][action.subtype] = action.newValue
+        -- end
+    end
+end
 
 dynamo.executeEvents = function (sectors, events, dt)
     for _, event in pairs(events) do
@@ -9,11 +17,7 @@ dynamo.executeEvents = function (sectors, events, dt)
             event:advanceClock(dt)
             local results = event:execute()
 
-            for _, action in ipairs(results) do
-                if action.type == "sector" then
-                    sectors[action.locate.index + 1][action.subtype] = action.newValue
-                end
-            end
+            executor(results)
         end
     end
 end
@@ -23,19 +27,19 @@ dynamo.control = function (sectors, controllers, flags)
         if controller.enabled then
             local results = controller:execute(flags)
 
-            for _, action in ipairs(results) do
-                if action.type == "sector" then
-                    sectors[action.locate.index + 1][action.subtype] = action.newValue
-                end
-            end
+            executor(results)
         end
     end
 end
 
--- dynamo.checkTriggers = function (triggers, visited, camera, action)
---     for _, trigger in pairs(triggers) do
---         trigger:execute(visited, camera, action, cache)
---     end
--- end
+dynamo.checkTriggers = function (triggers, refArr, sector_ref, entity, flags)
+    for _, trigger in pairs(refArr) do
+        if triggers[trigger].enabled then
+            local results = triggers[trigger]:execute(flags, sector_ref, entity)
+
+            executor(results)
+        end
+    end
+end
 
 return dynamo
