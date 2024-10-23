@@ -9,12 +9,16 @@ local dyn = require("lib.dynamicFunctions")
 local net = require("lib.networkingFunctions")
 
 -- Active data
-local sectorArr = {}
-local eventsArr = {}
-local textures  = {}
-local triggers  = {}
+local sectorArr   = {}
+local eventsArr   = {}
+local textures    = {}
+local triggers    = {}
+local controllers = {}
 local camera = {}
 
+local flags = {}
+
+-- This should be renamed
 local dummy = {}
 local mode
 
@@ -35,8 +39,7 @@ function love.load()
 
     local result = lod.loadMapGeometry("maps/testing_ground/geometry.json")
     textures  = lod.loadMapTexturing("maps/map0_texturing.lua")
-    triggers, eventsArr = lod.loadMapDynamics("maps/testing_ground/header.json")
-    -- triggers  = lod.loadTriggers("maps/map0_dynamics.lua")
+    controllers, triggers, eventsArr, flags = lod.loadMapDynamics("maps/testing_ground/header.json")
 
     sectorArr = result[1]
     camera    = result[2]
@@ -67,6 +70,9 @@ end
 
 function love.update(dt)
     dyn.executeEvents(sectorArr, eventsArr, dt)
+    dyn.control(sectorArr, controllers, flags)
+
+    dummy = {}
 
     if mode then
         local w = love.keyboard.isDown("w")
@@ -81,24 +87,25 @@ function love.update(dt)
         local response, uuid = net.receive()
         net.send(dt, mod, love.keyboard.isDown("space"), camera.angle)
 
-        dummy = {}
-
         if response then
             for index, value in ipairs(response) do
-                if index == uuid then
-                    camera.where.x = value.x
-                    camera.where.y = value.y
-                    camera.where.z = value.z
-                    camera.sector  = value.sector + 1
-                elseif value.enabled then
+                if value.enabled then
                     table.insert(dummy, {
                         where = {
                             x = value.x,
                             y = value.y,
                             z = value.z
                         },
+                        angle = 0,
                         sector = value.sector + 1
                     })
+
+                    if index == uuid then
+                        camera.where.x = value.x
+                        camera.where.y = value.y
+                        camera.where.z = value.z
+                        camera.sector  = value.sector + 1
+                    end
                 end
             end
         end
@@ -112,6 +119,12 @@ function love.update(dt)
             love.keyboard.isDown("a"),
             love.keyboard.isDown("d")
         )
+
+        table.insert(dummy, {
+            where = camera.where,
+            angle = camera.angle,
+            sector = camera.sector
+        })
     end
 
     -- mov.calculateMove(

@@ -14,17 +14,24 @@ local Sector = {
     -- Ceiling height
     topPlane    = 0,
     -- Floor height
-    bottomPlane = 0
+    bottomPlane = 0,
+
+    -- Triggers
+    triggers = {
+        onEnter    = {},
+        onLeave    = {},
+        onPortal   = {},
+        onGrounded = {},
+        onJump     = {},
+        onBump     = {}
+    }
 }
 
 -- Create new sector
 function Sector:new (nodes, links, ceil, floor)
     local sector = {
         nodes = nodes or {},
-        walls = {},
         links = links or {},
-
-        precalcs = {},
 
         topPlane    = ceil or 0,
         bottomPlane = floor or 0
@@ -35,6 +42,7 @@ function Sector:new (nodes, links, ceil, floor)
 
     for idx = 1, #sector.nodes do
         table.insert(sector.walls, {})
+        table.insert(sector.triggers.onPortal, {})
         sector:calculateWall(idx)
     end
 

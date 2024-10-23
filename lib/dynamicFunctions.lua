@@ -18,10 +18,24 @@ dynamo.executeEvents = function (sectors, events, dt)
     end
 end
 
-dynamo.checkTriggers = function (triggers, visited, camera, action)
-    for _, trigger in pairs(triggers) do
-        trigger:execute(visited, camera, action, cache)
+dynamo.control = function (sectors, controllers, flags)
+    for _, controller in pairs(controllers) do
+        if controller.enabled then
+            local results = controller:execute(flags)
+
+            for _, action in ipairs(results) do
+                if action.type == "sector" then
+                    sectors[action.locate.index + 1][action.subtype] = action.newValue
+                end
+            end
+        end
     end
 end
+
+-- dynamo.checkTriggers = function (triggers, visited, camera, action)
+--     for _, trigger in pairs(triggers) do
+--         trigger:execute(visited, camera, action, cache)
+--     end
+-- end
 
 return dynamo

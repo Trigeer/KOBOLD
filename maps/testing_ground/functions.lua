@@ -11,3 +11,8 @@ function sine_wave(delta)
         newValue = peak
     }}
 end
+
+
+-- function event_function(deltaTime)
+-- function trigger_function(flags, sector_ref, entity_data)
+-- function control_function(flags)

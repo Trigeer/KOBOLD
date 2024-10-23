@@ -9,7 +9,16 @@
             "enabled": true,
             "looping": true,
             "loop":    10
+        },
+        {
+            "name": "example_trigger",
+            "type": "trigger",
+            "enabled": false,
+            "kind": ["onEnter", "onLeave", "onPortal", "onGrounded", "onJump", "onBump", "onAction"],
+            "attach": [4, 2]
         }
     ],
-    "flags": []
+    "flags": {
+        "example": true
+    }
 }

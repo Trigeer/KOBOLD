@@ -14,8 +14,8 @@ function Event:new (enabled, looping, loop, code)
     local event = {
         enabled = enabled or true,
         looping = looping or true,
-        loop    = loop  or 0,
-        code    = code  or nil
+        loop    = loop    or 0,
+        code    = code    or function (clock) print("Empty...") end
     }
 
     setmetatable(event, self)

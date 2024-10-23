@@ -1,17 +1,16 @@
--- Activable triggers
---
+-- Dynamic scripted events triggered on certain occasions
 local Trigger = {
-    flags = {},
-    code = function (visited, camera, flags, cache)
+    enabled = true,
+    code = function (flags, sector_ref, entity)
         print("Empty...")
     end
 }
 
--- Create new sector
-function Trigger:new (flags, code)
+-- Create new trigger
+function Trigger:new (enabled, code)
     local trigger = {
-        flags = flags or {},
-        code  = code  or nil
+        enabled = enabled or true,
+        code    = code    or function (flags, sector_ref, entity) print("Empty...") end
     }
 
     setmetatable(trigger, self)
@@ -20,8 +19,8 @@ function Trigger:new (flags, code)
     return trigger
 end
 
-function Trigger:execute (visited, camera, action, cache)
-    self.code(visited, camera, self.flags, cache)
+function Trigger:execute (flags, sector_ref, entity)
+    return self.code(flags, sector_ref, entity)
 end
 
 return Trigger

@@ -3,10 +3,11 @@ require("constants")
 
 local luna = require("lib.dependencies.lunajson")
 
-local Sector          = require("metatables.sector")
-local SlantedSector   = require("metatables.slantedSector")
-local Event           = require("metatables.event")
-local Trigger         = require("metatables.trigger")
+local Sector        = require("metatables.sector")
+local SlantedSector = require("metatables.slantedSector")
+local Event         = require("metatables.event")
+local Trigger       = require("metatables.trigger")
+local Controller    = require("metatables.controller")
 
 local loader = {}
 
@@ -90,7 +91,7 @@ loader.loadMapTexturing = function (path)
     return {sheet = texture, texDim = textureData.texDim, sector = textureData.sector}
 end
 
-loader.loadMapDynamics = function (path)
+loader.loadMapDynamics = function (path, sectors)
     local file = love.filesystem.read(path)
     local eventData = luna.decode(file)
 
@@ -98,6 +99,9 @@ loader.loadMapDynamics = function (path)
         error("Events not loaded...")
     end
 
+    local flags = {}
+
+    local contrArr = {}
     local triggArr = {}
     local eventArr = {}
 
@@ -120,16 +124,31 @@ loader.loadMapDynamics = function (path)
                     event.loop,
                     _G[event.name]
                 ))
+            elseif event.type == "trigger" then
+                table.insert(triggArr, Trigger:new(
+                    event.enabled,
+                    _G[event.name]
+                ))
+
+                if event.kind == "onPortal" then
+                    table.insert(sectors[event.attach[1]].triggers[event.kind][event.attach[2]], #triggArr)
+                else
+                    table.insert(sectors[event.attach[1]].triggers[event.kind], #triggArr)
+                end
+            elseif event.type == "controller" then
+                table.insert(contrArr, Controller:new(
+                    event.enabled,
+                    _G[event.name]
+                ))
             else
                 print("Not supported...")
-                -- table.insert(triggArr, Trigger:new(
-
-                -- ))
             end
         end
     end
 
-    return triggArr, eventArr
+    flags = eventData.flags
+
+    return contrArr, triggArr, eventArr, flags
 end
 
 return loader
