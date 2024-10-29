@@ -1,6 +1,7 @@
 require("constants")
 local geo  = require("lib.helpers.geometricFunctions")
 local util = require("lib.helpers.utilities")
+local dyn  = require("lib.dynamicFunctions")
 
 local mov = {}
 
@@ -15,8 +16,8 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     local camSin = math.sin(camera.angle)
     local camCos = math.cos(camera.angle)
     local mod = {ws = 0, ad = 0}
-    if w and not s then mod.ws = -1 elseif not w and s then mod.ws = 1 end
-    if a and not d then mod.ad = -1 elseif not a and d then mod.ad = 1 end
+    if w and not s then mod.ws = 1 elseif not w and s then mod.ws = -1 end
+    if a and not d then mod.ad = 1 elseif not a and d then mod.ad = -1 end
     local moveVector = {
         x = mod.ws * camCos + mod.ad * camSin,
         y = mod.ws * camSin - mod.ad * camCos
@@ -25,7 +26,7 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     local decay = DecayTop
     if w or s or a or d then decay = DecayLow end
 
-    local d = (decay - decay^timeDelta) / (1 - decay);
+    local d = (1 - decay^timeDelta) / (1 - decay);
 
     -- New velocity
     camera.velocity.x = camera.velocity.x * decay^timeDelta + moveVector.x * Speed * d;
@@ -33,7 +34,7 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
 end
 
 -- Bounds indicate floor and ceiling height
-local function collideVertical(bounds, camera, timeDelta, eyes)
+local function collideVertical(sectorArr, eventsArr, controllers, triggers, flags, bounds, camera, timeDelta, eyes)
     -- Gravity
     camera.velocity.z = camera.velocity.z - 0.05 * timeDelta
     local next = camera.where.z + camera.velocity.z
@@ -54,7 +55,7 @@ local function collideVertical(bounds, camera, timeDelta, eyes)
     end
 end
 
-local function collideHorizontal(sectorArr, camera, eyes)
+local function collideHorizontal(sectorArr, eventsArr, controllers, triggers, flags, camera, eyes)
     local checkAgainst = {camera.sector}
     
     camera.where.x = camera.where.x + camera.velocity.x
@@ -82,7 +83,7 @@ local function collideHorizontal(sectorArr, camera, eyes)
             local dot = (xDelta * pdx + yDelta * pdy) / (xDelta^2 + yDelta^2)
 
             -- Skip on too far
-            local ends = WallOffset / math.sqrt(xDelta^2 + yDelta^2)
+            local ends = 1e-10 --WallOffset / math.sqrt(xDelta^2 + yDelta^2)
             if 0 - ends > dot or dot > 1 + ends then goto continue end
 
             local d = {
@@ -100,7 +101,7 @@ local function collideHorizontal(sectorArr, camera, eyes)
                     local holeLow = sector:floor(d)
                     local holeTop = sector:ceil(d)
 
-                    for _, neighbor in ipairs(neighbors) do
+                    for nidx, neighbor in ipairs(neighbors) do
 
                         local boundLow = math.max(
                             holeLow,
@@ -114,6 +115,11 @@ local function collideHorizontal(sectorArr, camera, eyes)
                         if boundTop - boundLow >= eyes + HeadMargin and boundLow <= cameraMid and boundTop >= cameraTop then
                             if not util.table_contains(checkAgainst, neighbor) then
                                 table.insert(checkAgainst, neighbor)
+                                dyn.checkTriggers(
+                                    sectorArr, eventsArr, controllers, triggers, flags,
+                                    sector.triggers.onPortal[nidx],
+                                    sec, "lack thereof"
+                                )
                             end
                             goto continue
                         end
@@ -130,7 +136,19 @@ local function collideHorizontal(sectorArr, camera, eyes)
 
     for _, sec in ipairs(checkAgainst) do
         if geo.checkInside(sectorArr[sec], camera) then
-            camera.sector = sec
+            if camera.sector ~= sec then
+                dyn.checkTriggers(
+                    sectorArr, eventsArr, controllers, triggers, flags,
+                    sectorArr[sec].triggers.onEnter,
+                    sec, "lack thereof"
+                )
+                dyn.checkTriggers(
+                    sectorArr, eventsArr, controllers, triggers, flags,
+                    sectorArr[camera.sector].triggers.onLeave,
+                    camera.sector, "lack thereof"
+                )
+                camera.sector = sec
+            end
             break
         end
     end
@@ -144,19 +162,26 @@ mov.moveCamera = function (camera, xDelta, yDelta)
 end
 
 -- Locked to assumed 60 FPS
-mov.calculateMove = function (sectorArr, camera, timeDelta, jump, crouch, w, s, a, d)
+mov.calculateMove = function (sectorArr, eventsArr, controllers, triggers, flags, camera, timeDelta, jump, crouch, w, s, a, d)
     local eyes = 0
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
-    updateVelocity(camera, timeDelta * 55, jump, w, s, a, d)
+    updateVelocity(camera, math.floor(timeDelta * 60), jump, w, s, a, d)
 
-    local visited = collideHorizontal(sectorArr, camera, eyes)
+    local visited = collideHorizontal(sectorArr, eventsArr, controllers, triggers, flags, camera, eyes)
     collideVertical(
+        sectorArr, eventsArr, controllers, triggers, flags,
         {
             floor = sectorArr[camera.sector]:floor(camera.where),
             ceil  = sectorArr[camera.sector]:ceil(camera.where)
         },
-        camera, timeDelta * 55, eyes
+        camera, math.floor(timeDelta * 60), eyes
+    )
+
+    dyn.checkTriggers(
+        sectorArr, eventsArr, controllers, triggers, flags,
+        sectorArr[camera.sector].triggers.onPresent,
+        camera.sector, "lack thereof"
     )
 
     return visited

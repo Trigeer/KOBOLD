@@ -11,10 +11,10 @@
             "loop":    10
         },
         {
-            "name": "example_trigger",
+            "name": "sine_wave",
             "type": "trigger",
             "enabled": false,
-            "kind": ["onEnter", "onLeave", "onPortal", "onGrounded", "onJump", "onBump", "onAction"],
+            "kind": ["onEnter", "onLeave", "onPortal", "onPresent", "onAction"],
             "attach": [4, 2]
         }
     ],

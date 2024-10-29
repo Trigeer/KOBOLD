@@ -18,18 +18,24 @@ local Sector = {
 
     -- Triggers
     triggers = {
-        onEnter    = {},
-        onLeave    = {},
-        onPortal   = {},
-        onGrounded = {},
-        onJump     = {},
-        onBump     = {}
+        onEnter   = {},
+        onLeave   = {},
+        onPortal  = {},
+        onPresent = {}
     }
 }
 
 -- Create new sector
 function Sector:new (nodes, links, ceil, floor)
     local sector = {
+        walls = {},
+        precalcs = {},
+        triggers = {
+            onEnter   = {},
+            onLeave   = {},
+            onPortal  = {},
+            onPresent = {}
+        },
         nodes = nodes or {},
         links = links or {},
 

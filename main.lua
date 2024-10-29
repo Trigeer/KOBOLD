@@ -37,12 +37,13 @@ function love.load()
         error("Illegal mode...")
     end
 
-    local result = lod.loadMapGeometry("maps/testing_ground/geometry.json")
+    local result = lod.loadMapGeometry("maps/map0_geometry.json")
     textures  = lod.loadMapTexturing("maps/map0_texturing.lua")
-    controllers, triggers, eventsArr, flags = lod.loadMapDynamics("maps/testing_ground/header.json")
 
     sectorArr = result[1]
     camera    = result[2]
+
+    controllers, triggers, eventsArr, flags = lod.loadMapDynamics("maps/testing_ground/header.json", sectorArr)
 
     if mode then
         net.connect("on-coupled.gl.at.ply.gg", 44735, "qwerty")
@@ -69,8 +70,8 @@ function love.load()
 end
 
 function love.update(dt)
-    dyn.executeEvents(sectorArr, eventsArr, dt)
-    dyn.control(sectorArr, controllers, flags)
+    dyn.executeEvents(sectorArr, eventsArr, controllers, triggers, flags, dt)
+    dyn.control(sectorArr, eventsArr, controllers, triggers, flags)
 
     dummy = {}
 
@@ -111,7 +112,8 @@ function love.update(dt)
         end
     else
         local visited = mov.calculateMove(
-            sectorArr, camera, dt,
+            sectorArr, eventsArr, controllers, triggers, flags,
+            camera, dt,
             love.keyboard.isDown("space"),
             love.keyboard.isDown("lshift"),
             love.keyboard.isDown("w"),
@@ -126,17 +128,6 @@ function love.update(dt)
             sector = camera.sector
         })
     end
-
-    -- mov.calculateMove(
-    --     sectorArr, dummy, dt,
-    --     love.keyboard.isDown("o"),
-    --     love.keyboard.isDown("p"),
-    --     love.keyboard.isDown("up"),
-    --     love.keyboard.isDown("down"),
-    --     love.keyboard.isDown("left"),
-    --     love.keyboard.isDown("right")
-    -- )
-    -- dyn.checkTriggers(triggers, visited, camera, love.keyboard.isDown("e"))
 end
 
 function love.draw()
@@ -159,6 +150,6 @@ function love.keyreleased(key, scancode, isrepeat)
 end
 
 function love.quit()
-    -- net.close()
+    if mode then net.close() end
     return false
 end

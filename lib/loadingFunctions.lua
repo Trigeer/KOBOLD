@@ -131,9 +131,10 @@ loader.loadMapDynamics = function (path, sectors)
                 ))
 
                 if event.kind == "onPortal" then
-                    table.insert(sectors[event.attach[1]].triggers[event.kind][event.attach[2]], #triggArr)
+                    table.insert(sectors[event.attach[1]].triggers.onPortal[event.attach[2]], #triggArr)
                 else
-                    table.insert(sectors[event.attach[1]].triggers[event.kind], #triggArr)
+                    -- table.insert(sectors[event.attach[1]].triggers[event.kind], #triggArr)
+                    table.insert(sectors[event.attach[1]].triggers, #triggArr)
                 end
             elseif event.type == "controller" then
                 table.insert(contrArr, Controller:new(
