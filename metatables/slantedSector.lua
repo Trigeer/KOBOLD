@@ -3,6 +3,8 @@ local Sector = require("metatables.sector")
 
 local SlantedSector = Sector:new()
 
+SlantedSector._type = "Slanted"
+
 function SlantedSector:ceil (point)
     local xDelta = (point.x - self:nodeAt(0).x) * math.tan(self.topPlane.dx)
     local yDelta = (point.y - self:nodeAt(0).y) * math.tan(self.topPlane.dy)

@@ -22,7 +22,9 @@ local Sector = {
         onLeave   = {},
         onPortal  = {},
         onPresent = {}
-    }
+    },
+
+    _type = "Sector"
 }
 
 -- Create new sector

@@ -2,9 +2,21 @@ local dynamo = {}
 
 local function executor (actions, sectors, events, controllers, triggers, flags)
     for _, action in ipairs(actions) do
-        -- if action.type == "sector" then
-        --     sectors[action.locate.index + 1][action.subtype] = action.newValue
-        -- end
+        if action.type == "sector" then
+            if (action.subtype == "topPlane" or action.subtype == "bottomPlane") and sectors[action.locate.index + 1]._type == "Sector" then
+                sectors[action.locate.index + 1][action.subtype] = action.newValue
+            else
+                sectors[action.locate.index + 1][action.subtype][action.locate.detail + 1] = action.newValue
+            end
+        elseif action.type == "event" then
+            events[action.locate.index + 1][action.subtype] = action.newValue
+        elseif action.type == "controller" then
+            controllers[action.locate.index + 1].enabled = action.newValue
+        elseif action.type == "trigger" then
+            triggers[action.locate.index + 1].enabled = action.newValue
+        elseif action.type == "flag" then
+            flags[action.locate.index] = action.newValue
+        end
     end
 end
 

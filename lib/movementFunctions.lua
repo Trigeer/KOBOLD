@@ -8,7 +8,7 @@ local mov = {}
 local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     -- Jumping
     if jump and camera.grounded then
-        camera.velocity.z = 0.7
+        camera.velocity.z = 0.3
         camera.grounded = false
     end
 
