@@ -6,7 +6,7 @@
         {
             "name":    "sine_wave",
             "type":    "event",
-            "enabled": true,
+            "enabled": false,
             "looping": true,
             "loop":    10
         },

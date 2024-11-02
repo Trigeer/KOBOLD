@@ -83,7 +83,7 @@ local function collideHorizontal(sectorArr, eventsArr, controllers, triggers, fl
             local dot = (xDelta * pdx + yDelta * pdy) / (xDelta^2 + yDelta^2)
 
             -- Skip on too far
-            local ends = 1e-10 --WallOffset / math.sqrt(xDelta^2 + yDelta^2)
+            local ends = 1e-5 --WallOffset / math.sqrt(xDelta^2 + yDelta^2)
             if 0 - ends > dot or dot > 1 + ends then goto continue end
 
             local d = {

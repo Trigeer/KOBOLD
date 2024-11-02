@@ -21,13 +21,15 @@ local flags = {}
 -- This should be renamed
 local dummy = {}
 local mode
+local eventful = false
 
 function love.load()
-    print("Select mode:")
-    print("  1 for Online")
-    print("  2 for Offline")
-    io.write("console> ")
-    local modeNum = io.read("*n")
+    -- print("Select mode:")
+    -- print("  1 for Online")
+    -- print("  2 for Offline")
+    -- io.write("console> ")
+    -- local modeNum = io.read("*n")
+    local modeNum = 2
 
     if modeNum == 1 then
         mode = true
@@ -37,13 +39,15 @@ function love.load()
         error("Illegal mode...")
     end
 
-    local result = lod.loadMapGeometry("maps/map0_geometry.json")
-    textures  = lod.loadMapTexturing("maps/map0_texturing.lua")
+    local result = lod.loadMapGeometry("maps/geometry.json")
+    -- textures  = lod.loadMapTexturing("maps/map0_texturing.lua")
 
     sectorArr = result[1]
     camera    = result[2]
 
-    controllers, triggers, eventsArr, flags = lod.loadMapDynamics("maps/testing_ground/header.json", sectorArr)
+    if eventful then
+        controllers, triggers, eventsArr, flags = lod.loadMapDynamics("maps/testing_ground/header.json", sectorArr)
+    end
 
     if mode then
         net.connect("on-coupled.gl.at.ply.gg", 44735, "qwerty")
@@ -70,8 +74,10 @@ function love.load()
 end
 
 function love.update(dt)
-    dyn.executeEvents(sectorArr, eventsArr, controllers, triggers, flags, dt)
-    dyn.control(sectorArr, eventsArr, controllers, triggers, flags)
+    if eventful then
+        dyn.executeEvents(sectorArr, eventsArr, controllers, triggers, flags, dt)
+        dyn.control(sectorArr, eventsArr, controllers, triggers, flags)
+    end
 
     dummy = {}
 
@@ -128,10 +134,14 @@ function love.update(dt)
             sector = camera.sector
         })
     end
+
+    print("calculated")
 end
 
 function love.draw()
     gpx.drawScreen(sectorArr, dummy, textures, camera)
+    -- love.timer.sleep(0.1)
+    print("drawn")
 end
 
 -- Look around

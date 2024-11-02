@@ -22,11 +22,16 @@ loader.loadMapGeometry = function (path)
 
     -- Flatten the vertex table
     local vertexArr = {}
+    -- for _, vertex in ipairs(mapData.nodes) do
+    --     local y = vertex.y
+    --     for _, x in ipairs(vertex.x) do
+    --         table.insert(vertexArr, {x = x, y = y})
+    --     end
+    -- end
+
+    -- local vertexArr = {}
     for _, vertex in ipairs(mapData.nodes) do
-        local y = vertex.y
-        for _, x in ipairs(vertex.x) do
-            table.insert(vertexArr, {x = x, y = y})
-        end
+        table.insert(vertexArr, {x = vertex.x, y = vertex.y})
     end
 
     -- Prepare the sector data
