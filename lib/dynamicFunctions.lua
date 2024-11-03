@@ -5,6 +5,12 @@ local function executor (actions, sectors, events, controllers, triggers, flags)
         if action.type == "sector" then
             if (action.subtype == "topPlane" or action.subtype == "bottomPlane") and sectors[action.locate.index + 1]._type == "Sector" then
                 sectors[action.locate.index + 1][action.subtype] = action.newValue
+            elseif action.subtype == "nodes" then
+                if action.locate.coord == "x" then
+                    sectors[action.locate.index + 1]:nodeSet(action.locate.detail + 1, action.newValue, sectors[action.locate.index + 1]:nodeAt(action.locate.detail + 1).y)
+                else
+                    sectors[action.locate.index + 1]:nodeSet(action.locate.detail + 1, sectors[action.locate.index + 1]:nodeAt(action.locate.detail + 1).x, action.newValue)
+                end
             else
                 sectors[action.locate.index + 1][action.subtype][action.locate.detail + 1] = action.newValue
             end
