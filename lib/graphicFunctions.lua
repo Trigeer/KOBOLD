@@ -113,7 +113,7 @@ local function drawSprite(precalc, now, yTop, yLow)
     end
 end
 
-local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
+local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, ldep, rdep)
     local sector = sectors[now.sector]
 
     local camCos = math.cos(camera.angle)
@@ -351,7 +351,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
         -- Schedule neighboring sector
         if next(neighbor) ~= nil and xEnd > xBegin and depth >= 0 then
             for idx = 1, #neighbor do
-                drawSector(
+                local passed = drawSector(
                     sectors, textures, camera,
                     {
                         sector = neighbor[idx],
@@ -359,19 +359,41 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth)
                         sx1 = xEnd
                     },
                     {yTop[idx + 1]}, {yLow[idx + 1]},
-                    depth - 1
+                    depth - 1, tz0, tz1
                 )
+                sector.precalcs = util.mergeArrayTables(sector.precalcs, passed)
             end
-        end
-
-        -- Draw sprites
-        for i = 1, #sector.precalcs do
-            drawSprite(sector.precalcs[i], now, yTop, yLow)
         end
 
         ::continue::
     end
-    
+
+    local forwarded = {}
+    -- Draw sprites
+    for i = 1, #sector.precalcs do
+        if sector.precalcs[i].tz < ldep then
+            table.insert(forwarded, {
+                tz = sector.precalcs[i].tz,
+                head = sector.precalcs[i].head,
+                feet = sector.precalcs[i].feet,
+                x0 = sector.precalcs[i].x0,
+                x1 = now.sx1
+            })
+        elseif sector.precalcs[i].tz < rdep then
+            table.insert(forwarded, {
+                tz = sector.precalcs[i].tz,
+                head = sector.precalcs[i].head,
+                feet = sector.precalcs[i].feet,
+                x0 = now.sx0,
+                x1 = sector.precalcs[i].x1
+            })
+        else
+            drawSprite(sector.precalcs[i], now, yTop, yLow)
+        end
+    end
+
+    return forwarded
+
 end
 
 graphics.drawScreen = function (sectors, entities, textures, camera)
@@ -402,7 +424,7 @@ graphics.drawScreen = function (sectors, entities, textures, camera)
             sx1 = ScreenWidth - 1
         },
         yTop, yLow,
-        RenderDepth
+        RenderDepth, 0, 0
     )
 
     drawCenteredText(540, 10, 30, 25, camera.sector)

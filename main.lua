@@ -135,13 +135,13 @@ function love.update(dt)
         })
     end
 
-    print("calculated")
+    -- print("calculated")
 end
 
 function love.draw()
     gpx.drawScreen(sectorArr, dummy, textures, camera)
     -- love.timer.sleep(0.1)
-    print("drawn")
+    -- print("drawn")
 end
 
 -- Look around

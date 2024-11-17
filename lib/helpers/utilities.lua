@@ -14,6 +14,22 @@ function utils.shallow(orig)
     return copy
 end
 
+function utils.mergeArrayTables(t1, t2)
+    local merged = {}
+
+    -- Copy elements from the first table
+    for _, v in ipairs(t1) do
+        table.insert(merged, v)
+    end
+
+    -- Copy elements from the second table
+    for _, v in ipairs(t2) do
+        table.insert(merged, v)
+    end
+
+    return merged
+end
+
 function utils.table_contains(tbl, x)
     for _, v in ipairs(tbl) do
         if v == x then 
