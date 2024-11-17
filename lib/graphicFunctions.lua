@@ -370,21 +370,24 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
 
     local forwarded = {}
     -- Draw sprites
+    table.sort(sector.precalcs, function (a, b)
+        return a.tz > b.tz
+    end)
     for i = 1, #sector.precalcs do
-        if sector.precalcs[i].tz < ldep then
+        if sector.precalcs[i].tz < ldep then--and sector.precalcs[i].x0 < now.sx0 then
             table.insert(forwarded, {
                 tz = sector.precalcs[i].tz,
                 head = sector.precalcs[i].head,
                 feet = sector.precalcs[i].feet,
                 x0 = sector.precalcs[i].x0,
-                x1 = now.sx1
+                x1 = math.min(now.sx1, sector.precalcs[i].x1)
             })
-        elseif sector.precalcs[i].tz < rdep then
+        elseif sector.precalcs[i].tz < rdep then--and sector.precalcs[i].x1 > now.sx1 then
             table.insert(forwarded, {
                 tz = sector.precalcs[i].tz,
                 head = sector.precalcs[i].head,
                 feet = sector.precalcs[i].feet,
-                x0 = now.sx0,
+                x0 = math.max(now.sx0, sector.precalcs[i].x0),
                 x1 = sector.precalcs[i].x1
             })
         else
