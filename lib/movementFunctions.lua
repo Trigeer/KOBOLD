@@ -12,12 +12,20 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
         camera.grounded = false
     end
 
+    local inverse = 0.70710676908493 -- 1/sqrt(2)
+
     -- Apply key presses
     local camSin = math.sin(camera.angle)
     local camCos = math.cos(camera.angle)
     local mod = {ws = 0, ad = 0}
-    if w and not s then mod.ws = 1 elseif not w and s then mod.ws = -1 end
-    if a and not d then mod.ad = 1 elseif not a and d then mod.ad = -1 end
+    if w and not s then mod.ws = Speed elseif not w and s then mod.ws = -Speed end
+    if a and not d then mod.ad = Speed elseif not a and d then mod.ad = -Speed end
+
+    if mod.ws ~= 0 and mod.ad ~= 0 then
+        mod.ws = mod.ws * inverse
+        mod.ad = mod.ad * inverse
+    end
+
     local moveVector = {
         x = mod.ws * camCos + mod.ad * camSin,
         y = mod.ws * camSin - mod.ad * camCos
@@ -29,8 +37,8 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     local d = (1 - decay^timeDelta) / (1 - decay);
 
     -- New velocity
-    camera.velocity.x = camera.velocity.x * decay^timeDelta + moveVector.x * Speed * d;
-    camera.velocity.y = camera.velocity.y * decay^timeDelta + moveVector.y * Speed * d;
+    camera.velocity.x = camera.velocity.x * decay^timeDelta + moveVector.x * d;
+    camera.velocity.y = camera.velocity.y * decay^timeDelta + moveVector.y * d;
 end
 
 -- Bounds indicate floor and ceiling height
@@ -83,8 +91,8 @@ local function collideHorizontal(sectorArr, eventsArr, controllers, triggers, fl
             local dot = (xDelta * pdx + yDelta * pdy) / (xDelta^2 + yDelta^2)
 
             -- Skip on too far
-            local ends = 1e-5 --WallOffset / math.sqrt(xDelta^2 + yDelta^2)
-            if 0 - ends > dot or dot > 1 + ends then goto continue end
+            -- local ends = 1e-5 --WallOffset / math.sqrt(xDelta^2 + yDelta^2)
+            if 0 > dot or dot > 1 then goto continue end
 
             local d = {
                 x = dot * xDelta + x1,
