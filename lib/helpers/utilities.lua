@@ -62,4 +62,8 @@ utils.scalerNext = function (scaler)
     return scaler.result
 end
 
+utils.signum = function (val)
+    return val>=0 and 1 or val<0 and -1
+end
+
 return utils

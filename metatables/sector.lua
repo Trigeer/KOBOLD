@@ -99,8 +99,9 @@ function Sector:calculateWall (index)
     local yOff = self:nodeAt(index).y - self:nodeAt(index + 1).y
 
     local wallLen = math.sqrt(xOff^2 + yOff^2)
-    self.walls[index].dx =  yOff / wallLen
-    self.walls[index].dy = -xOff / wallLen
+    self.walls[index].dx  =  yOff / wallLen
+    self.walls[index].dy  = -xOff / wallLen
+    self.walls[index].len = wallLen
 end
 
 return Sector

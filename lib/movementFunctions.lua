@@ -88,11 +88,12 @@ local function collideHorizontal(sectorArr, eventsArr, controllers, triggers, fl
             -- Player and wall difference
             local pdx = camera.where.x - x1
             local pdy = camera.where.y - y1
-            local dot = (xDelta * pdx + yDelta * pdy) / (xDelta^2 + yDelta^2)
+
+            local dot = (xDelta * pdx + yDelta * pdy) / sector.walls[idx].len^2
 
             -- Skip on too far
-            -- local ends = 1e-5 --WallOffset / math.sqrt(xDelta^2 + yDelta^2)
-            if 0 > dot or dot > 1 then goto continue end
+            local ends = WallOffset / (sector.walls[idx].len * 2)
+            if 0 - ends > dot or dot > 1 + ends then goto continue end
 
             local d = {
                 x = dot * xDelta + x1,
