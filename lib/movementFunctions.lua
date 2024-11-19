@@ -175,7 +175,7 @@ mov.calculateMove = function (sectorArr, eventsArr, controllers, triggers, flags
     local eyes = 0
     if crouch then eyes = DuckHeight else eyes = EyeHeight end
 
-    updateVelocity(camera, math.floor(timeDelta * 60), jump, w, s, a, d)
+    updateVelocity(camera, timeDelta * 60, jump, w, s, a, d)
 
     local visited = collideHorizontal(sectorArr, eventsArr, controllers, triggers, flags, camera, eyes)
     collideVertical(
@@ -184,7 +184,7 @@ mov.calculateMove = function (sectorArr, eventsArr, controllers, triggers, flags
             floor = sectorArr[camera.sector]:floor(camera.where),
             ceil  = sectorArr[camera.sector]:ceil(camera.where)
         },
-        camera, math.floor(timeDelta * 60), eyes
+        camera, timeDelta * 60, eyes
     )
 
     dyn.checkTriggers(
