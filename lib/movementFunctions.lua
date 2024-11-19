@@ -8,7 +8,7 @@ local mov = {}
 local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     -- Jumping
     if jump and camera.grounded then
-        camera.velocity.z = 0.3
+        camera.velocity.z = 0.8
         camera.grounded = false
     end
 
@@ -36,6 +36,11 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
 
     local d = (1 - decay^timeDelta) / (1 - decay);
 
+    local A = (1 - decay^(timeDelta - 1)) / (1 - decay)
+    local B = (decay * (1 - (timeDelta - 1) * decay^(timeDelta - 2) + (timeDelta - 2) * decay^(timeDelta - 1))) / (1 - decay)^2
+    camera.where.x = camera.where.x + camera.velocity.x * d + moveVector.x * (timeDelta * A - B - A)
+    camera.where.y = camera.where.y + camera.velocity.y * d + moveVector.y * (timeDelta * A - B - A)
+
     -- New velocity
     camera.velocity.x = camera.velocity.x * decay^timeDelta + moveVector.x * d;
     camera.velocity.y = camera.velocity.y * decay^timeDelta + moveVector.y * d;
@@ -44,10 +49,8 @@ end
 -- Bounds indicate floor and ceiling height
 local function collideVertical(sectorArr, eventsArr, controllers, triggers, flags, bounds, camera, timeDelta, eyes)
     -- Gravity
-    camera.velocity.z = camera.velocity.z - 0.05 * timeDelta
-    local next = camera.where.z + camera.velocity.z
-
-    -- TODO: Investigate risk of vertical OOB due too wrong z-velocity direction
+    local next = camera.where.z + timeDelta * (camera.velocity.z - (timeDelta + 1) * 0.045)
+    camera.velocity.z = camera.velocity.z - 0.09 * timeDelta
 
     -- Snap to ground
     if camera.velocity.z < 0 and next < bounds.floor + eyes then
@@ -65,9 +68,6 @@ end
 
 local function collideHorizontal(sectorArr, eventsArr, controllers, triggers, flags, camera, eyes)
     local checkAgainst = {camera.sector}
-    
-    camera.where.x = camera.where.x + camera.velocity.x
-    camera.where.y = camera.where.y + camera.velocity.y
 
     -- Calculate camera bounds
     local cameraTop = camera.where.z + HeadMargin
