@@ -36,10 +36,8 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
 
     local d = (1 - decay^timeDelta) / (1 - decay);
 
-    local A = (1 - decay^(timeDelta - 1)) / (1 - decay)
-    local B = (decay * (1 - (timeDelta - 1) * decay^(timeDelta - 2) + (timeDelta - 2) * decay^(timeDelta - 1))) / (1 - decay)^2
-    camera.where.x = camera.where.x + camera.velocity.x * d + moveVector.x * (timeDelta * A - B - A)
-    camera.where.y = camera.where.y + camera.velocity.y * d + moveVector.y * (timeDelta * A - B - A)
+    camera.where.x = camera.where.x + camera.velocity.x * decay * d + (moveVector.x * (timeDelta - decay * d)) / (1 - decay)
+    camera.where.y = camera.where.y + camera.velocity.y * decay * d + (moveVector.y * (timeDelta - decay * d)) / (1 - decay)
 
     -- New velocity
     camera.velocity.x = camera.velocity.x * decay^timeDelta + moveVector.x * d;
