@@ -45,7 +45,7 @@ local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
 end
 
 -- Bounds indicate floor and ceiling height
-local function collideVertical(sectorArr, eventsArr, controllers, triggers, flags, bounds, camera, timeDelta, eyes)
+local function collideVertical(bounds, camera, timeDelta, eyes)
     -- Gravity
     local next = camera.where.z + timeDelta * (camera.velocity.z - (timeDelta + 1) * 0.045)
     camera.velocity.z = camera.velocity.z - 0.09 * timeDelta
@@ -177,7 +177,6 @@ mov.calculateMove = function (sectorArr, eventsArr, controllers, triggers, flags
 
     local visited = collideHorizontal(sectorArr, eventsArr, controllers, triggers, flags, camera, eyes)
     collideVertical(
-        sectorArr, eventsArr, controllers, triggers, flags,
         {
             floor = sectorArr[camera.sector]:floor(camera.where),
             ceil  = sectorArr[camera.sector]:ceil(camera.where)

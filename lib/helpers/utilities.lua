@@ -59,7 +59,7 @@ utils.scalerNext = function (scaler)
         scaler.result = scaler.result + scaler.bop
         scaler.cache = scaler.cache - scaler.ca
     end
-    return scaler.result
+    return math.floor(scaler.result)
 end
 
 utils.signum = function (val)

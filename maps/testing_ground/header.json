@@ -4,6 +4,7 @@
     ],
     "functions": [
         {
+            "source":  0,
             "name":    "sine_wave",
             "type":    "event",
             "enabled": false,
@@ -14,7 +15,7 @@
             "name": "sine_wave",
             "type": "trigger",
             "enabled": false,
-            "kind": ["onEnter", "onLeave", "onPortal", "onPresent", "onAction"],
+            "kind": ["onEnter", "onLeave", "onPortal", "onPresent"],
             "attach": [4, 2]
         }
     ],

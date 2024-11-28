@@ -22,17 +22,17 @@ loader.loadMapGeometry = function (path)
 
     -- Flatten the vertex table
     local vertexArr = {}
-    -- for _, vertex in ipairs(mapData.nodes) do
-    --     local y = vertex.y
-    --     for _, x in ipairs(vertex.x) do
-    --         table.insert(vertexArr, {x = x, y = y})
-    --     end
-    -- end
+    for _, vertex in ipairs(mapData.nodes) do
+        local y = vertex.y
+        for _, x in ipairs(vertex.x) do
+            table.insert(vertexArr, {x = x, y = y})
+        end
+    end
 
     -- local vertexArr = {}
-    for _, vertex in ipairs(mapData.nodes) do
-        table.insert(vertexArr, {x = vertex.x, y = vertex.y})
-    end
+    -- for _, vertex in ipairs(mapData.nodes) do
+    --     table.insert(vertexArr, {x = vertex.x, y = vertex.y})
+    -- end
 
     -- Prepare the sector data
     local sectorArr = {}
@@ -138,8 +138,8 @@ loader.loadMapDynamics = function (path, sectors)
                 if event.kind == "onPortal" then
                     table.insert(sectors[event.attach[1]].triggers.onPortal[event.attach[2]], #triggArr)
                 else
-                    -- table.insert(sectors[event.attach[1]].triggers[event.kind], #triggArr)
-                    table.insert(sectors[event.attach[1]].triggers, #triggArr)
+                    table.insert(sectors[event.attach[1]].triggers[event.kind], #triggArr)
+                    -- table.insert(sectors[event.attach[1]].triggers, #triggArr)
                 end
             elseif event.type == "controller" then
                 table.insert(contrArr, Controller:new(

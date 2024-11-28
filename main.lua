@@ -24,23 +24,37 @@ local mode
 local eventful = false
 
 function love.load()
+    print("Input map package")
+    io.write("package> ")
+    local pack = io.read("*l")
+
     -- print("Select mode:")
     -- print("  1 for Online")
     -- print("  2 for Offline")
     -- io.write("console> ")
     -- local modeNum = io.read("*n")
     local modeNum = 2
+    local ip = ''
+    local port = 0
+    local user = 'NULL'
 
     if modeNum == 1 then
         mode = true
+
+        io.write("host IP> ")
+        ip = io.read("*l")
+        io.write("host port> ")
+        port = io.read("*n")
+        io.write("username> ")
+        user = io.read("*l")
     elseif modeNum == 2 then
         mode = false
     else
         error("Illegal mode...")
     end
 
-    local result = lod.loadMapGeometry("maps/geometry.json")
-    -- textures  = lod.loadMapTexturing("maps/map0_texturing.lua")
+    local result = lod.loadMapGeometry(pack + "_geometry.json")
+    textures  = lod.loadMapTexturing(pack + "_texturing.lua")
 
     sectorArr = result[1]
     camera    = result[2]
@@ -50,24 +64,24 @@ function love.load()
     end
 
     if mode then
-        net.connect("on-coupled.gl.at.ply.gg", 44735, "qwerty")
+        net.connect(ip, port, user)
         net.send(0, {ws = 0, ad = 0}, false, camera.angle)
     end
 
-    -- dummy = {
+    -- dummy = {{
     --     where = {
     --         x = 10,
     --         y = 2.5,
     --         z = sectorArr[22]:floor({x = 10, y = 2.5}) + EyeHeight + 1e-5
     --     },
-    --     angle  = 0,
+    --     angle  = 0.1,
     --     sector = 22,
     --     pitch  = 0,
     
     --     -- Control values
     --     velocity = {x = 0, y = 0, z = 0},
     --     grounded = false
-    -- }
+    -- }}
 
     love.mouse.setRelativeMode(true)
     love.window.setMode(ScreenWidth * Scaling, ScreenHeight * Scaling)
@@ -127,21 +141,11 @@ function love.update(dt)
             love.keyboard.isDown("a"),
             love.keyboard.isDown("d")
         )
-
-        table.insert(dummy, {
-            where = camera.where,
-            angle = camera.angle,
-            sector = camera.sector
-        })
     end
-
-    -- print("calculated")
 end
 
 function love.draw()
     gpx.drawScreen(sectorArr, dummy, textures, camera)
-    -- love.timer.sleep(0.1)
-    -- print("drawn")
 end
 
 -- Look around
