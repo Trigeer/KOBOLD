@@ -268,9 +268,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
 
         for x = xBegin, xEnd do
             -- Calculate this points z-coordinate for shading
-
             -- local shader = math.floor((((ScreenWidth / 2) - x) / (ScreenWidth * Hfov)) * 10) * 8
-
             -- local zShade = math.abs(math.floor(((x - x0) * (tz1 - tz0) / (x1 - x0) + tz0) * 8))
             -- local xShade = math.abs(math.floor(((x - x0) * (tx1 - tx0) / (x1 - x0) + tx0) * 8))
             -- local shader = math.floor(math.sqrt(xShade^2 + zShade^2))
@@ -366,36 +364,25 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
 
         ::continue::
     end
-
-    local forwarded = {}
+    
     -- Draw sprites
+    local forwarded = {}
     table.sort(sector.precalcs, function (a, b)
         return a.tz > b.tz
     end)
     for i = 1, #sector.precalcs do
         if sector.precalcs[i].tz < ldep then
-            table.insert(forwarded, {
-                tz = sector.precalcs[i].tz,
-                head = sector.precalcs[i].head,
-                feet = sector.precalcs[i].feet,
-                x0 = sector.precalcs[i].x0,
-                x1 = math.min(now.sx1, sector.precalcs[i].x1)
-            })
+            sector.precalcs[i].x1 = math.min(now.sx1, sector.precalcs[i].x1)
+            table.insert(forwarded, sector.precalcs[i])
         elseif sector.precalcs[i].tz < rdep then
-            table.insert(forwarded, {
-                tz = sector.precalcs[i].tz,
-                head = sector.precalcs[i].head,
-                feet = sector.precalcs[i].feet,
-                x0 = math.max(now.sx0, sector.precalcs[i].x0),
-                x1 = sector.precalcs[i].x1
-            })
+            sector.precalcs[i].x0 = math.max(now.sx0, sector.precalcs[i].x0)
+            table.insert(forwarded, sector.precalcs[i])
         else
             drawSprite(sector.precalcs[i], now, yTop, yLow)
         end
     end
 
     return forwarded
-
 end
 
 graphics.drawScreen = function (sectors, entities, textures, camera)

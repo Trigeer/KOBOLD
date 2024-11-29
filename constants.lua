@@ -1,14 +1,14 @@
 -- Resolution constants (612x480, scaled 3x up)
-Scaling = 3
-ScreenWidth  = 204
-ScreenHeight = 160
+-- Scaling = 3
+-- ScreenWidth  = 204
+-- ScreenHeight = 160
 
--- Scaling = 1
--- ScreenWidth  = 612
--- ScreenHeight = 480
+Scaling = 1
+ScreenWidth  = 612
+ScreenHeight = 480
 
 -- Rendering constants
-ShadowIntensity = 0.33
+ShadowIntensity = 5
 
 -- Field of View
 Hfov = 0.73 --* ScreenHeight / ScreenWidth

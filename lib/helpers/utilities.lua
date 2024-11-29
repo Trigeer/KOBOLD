@@ -55,10 +55,8 @@ utils.scalerInit = function (a, b, c, d, f)
 end
 utils.scalerNext = function (scaler)
     scaler.cache = scaler.cache + scaler.fd
-    while scaler.cache >= scaler.ca do
-        scaler.result = scaler.result + scaler.bop
-        scaler.cache = scaler.cache - scaler.ca
-    end
+    scaler.result = scaler.result + math.floor(scaler.cache / scaler.ca) * scaler.bop
+    scaler.cache = scaler.cache % scaler.ca
     return math.floor(scaler.result)
 end
 

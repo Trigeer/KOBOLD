@@ -53,8 +53,8 @@ function love.load()
         error("Illegal mode...")
     end
 
-    local result = lod.loadMapGeometry(pack + "_geometry.json")
-    textures  = lod.loadMapTexturing(pack + "_texturing.lua")
+    local result = lod.loadMapGeometry(pack .. "_geometry.json")
+    textures  = lod.loadMapTexturing(pack .. "_texturing.lua")
 
     sectorArr = result[1]
     camera    = result[2]
