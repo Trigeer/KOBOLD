@@ -7,6 +7,10 @@ Scaling = 1
 ScreenWidth  = 612
 ScreenHeight = 480
 
+-- Scaling = 2
+-- ScreenWidth  = 306
+-- ScreenHeight = 240
+
 -- Rendering constants
 ShadowIntensity = 5
 

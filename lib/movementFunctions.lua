@@ -8,7 +8,7 @@ local mov = {}
 local function updateVelocity(camera, timeDelta, jump, w, s, a, d)
     -- Jumping
     if jump and camera.grounded then
-        camera.velocity.z = 0.8
+        camera.velocity.z = 0.7
         camera.grounded = false
     end
 
@@ -47,8 +47,8 @@ end
 -- Bounds indicate floor and ceiling height
 local function collideVertical(bounds, camera, timeDelta, eyes)
     -- Gravity
-    local next = camera.where.z + timeDelta * (camera.velocity.z - (timeDelta + 1) * 0.045)
-    camera.velocity.z = camera.velocity.z - 0.09 * timeDelta
+    local next = camera.where.z + timeDelta * (camera.velocity.z - (timeDelta + 1) * 0.03)
+    camera.velocity.z = camera.velocity.z - 0.06 * timeDelta
 
     -- Snap to ground
     if camera.velocity.z < 0 and next < bounds.floor + eyes then

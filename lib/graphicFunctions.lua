@@ -42,7 +42,7 @@ local function vline(x, yTop, yLow, color, boundTop, boundLow)
 end
 
 -- Textured vertical line
-local function vline2(x, yTop, yLow, texBoundTop, texBoundLow, tex, txtx, shade, boundTop, boundLow)
+local function vline2(x, yTop, yLow, texBoundTop, texBoundLow, tex, u, v, txtx, shade, boundTop, boundLow)
     -- Limit the values to valid ranges
     yTop = geo.clamp(yTop, boundTop, boundLow) + 1
     yLow = geo.clamp(yLow, boundTop, boundLow) - 1
@@ -53,8 +53,8 @@ local function vline2(x, yTop, yLow, texBoundTop, texBoundLow, tex, txtx, shade,
         -- Texture scaling calculations
         local txty = geo.clamp(util.scalerNext(ty), 0, tex.dim.height - 1)
         local R, G, B, _ = tex.sheet:getPixel(
-            (tex.cords.i * tex.dim.width)  + (txtx * tex.cords.u) % tex.dim.width,
-            (tex.cords.j * tex.dim.height) + (txty * tex.cords.v) % tex.dim.height
+            (tex.cords.i * tex.dim.width)  + (txtx * u) % tex.dim.width,
+            (tex.cords.j * tex.dim.height) + (txty * v) % tex.dim.height
         )
 
         drawPixel(x, y, {
@@ -215,6 +215,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
         local nFloorInt    = {}
         local nTexCeilInt  = {}
         local nTexFloorInt = {}
+        local dif = {}
         if next(neighbor) ~= nil then
 
             for idx, n in ipairs(neighbor) do
@@ -228,6 +229,8 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
                 -- Choose texture bounds
                 local tvnCeil  = math.min(vnCeil0,  vnCeil1)
                 local tvnFloor = math.max(vnFloor0, vnFloor1)
+
+                table.insert(dif, {tvnCeil, tvnFloor})
 
                 -- Project ceiling and floor heights onto screen y-coordinate
                 table.insert(
@@ -281,6 +284,8 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
             local floor = util.scalerNext(floorInt)
             local tex   = util.scalerNext(texCeilInt)
 
+            local v = tyCeil
+
             -- Render ceiling and floor: everything above and below relevent heights
             vline(x, yTop[1][x + 1], ceil,           {50, 50, 50}, yTop[1][x + 1], yLow[1][x + 1]) -- Ceiling
             vline(x, floor,          yLow[1][x + 1], {50, 50, 50}, yTop[1][x + 1], yLow[1][x + 1]) -- Floor
@@ -301,7 +306,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
                                 sheet = textures.sheet,
                                 dim   = textures.texDim,
                                 cords = textures.sector[now.sector][s][idx]
-                            },
+                            }, sector.walls[s].len, v - dif[idx][1],
                             txtx, shader,
                             yTop[idx + 1][x + 1], yLow[idx + 1][x + 1]
                         )
@@ -313,6 +318,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
 
                     ceil = nfloor
                     tex  = util.scalerNext(nTexFloorInt[idx])
+                    v = dif[idx][2]
                 end
 
                 -- Render lowest wall
@@ -324,7 +330,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
                             sheet = textures.sheet,
                             dim   = textures.texDim,
                             cords = textures.sector[now.sector][s][#neighbor + 1]
-                        },
+                        }, sector.walls[s].len, v - tyFloor,
                         txtx, shader,
                         yTop[1][x + 1], yLow[1][x + 1]
                     )
@@ -338,7 +344,7 @@ local function drawSector(sectors, textures, camera, now, yTop, yLow, depth, lde
                         sheet = textures.sheet,
                         dim   = textures.texDim,
                         cords = textures.sector[now.sector][s][1]
-                    },
+                    }, sector.walls[s].len, tyCeil - tyFloor,
                     txtx, shader,
                     yTop[1][x + 1], yLow[1][x + 1]
                 )
@@ -416,9 +422,9 @@ graphics.drawScreen = function (sectors, entities, textures, camera)
         RenderDepth, 0, 0
     )
 
-    drawCenteredText(540, 10, 30, 25, camera.sector)
-    drawCenteredText(520, 45, 30, 25, camera.where.x)
-    drawCenteredText(520, 75, 30, 25, camera.where.y)
+    -- drawCenteredText(540, 10, 30, 25, camera.sector)
+    -- drawCenteredText(520, 45, 30, 25, camera.where.x)
+    -- drawCenteredText(520, 75, 30, 25, camera.where.y)
 
     -- Cleanup
     for i = 1, #sectors do

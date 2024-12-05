@@ -91,7 +91,14 @@ loader.loadMapGeometry = function (path)
 end
 
 loader.loadMapTexturing = function (path)
-    local textureData = love.filesystem.load(path)()
+    -- local textureData = love.filesystem.load(path)()
+    local file = love.filesystem.read(path)
+    local textureData = luna.decode(file)
+
+    if textureData == nil then
+        error("Textures not loaded...")
+    end
+
     local texture = love.image.newImageData(textureData.texFile)
     return {sheet = texture, texDim = textureData.texDim, sector = textureData.sector}
 end

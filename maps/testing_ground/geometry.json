@@ -12,5 +12,5 @@
         {"slanted": false, "floor": 0, "ceil": 20, "nodes": [6, 0, 2, 4], "links": [[2], [], [0], [4]]},
         {"slanted": false, "floor": 0, "ceil": 20, "nodes": [2, 3, 5, 4], "links": [[3], [0], [1], [2]]}
     ],
-    "player": {"x": 4.5, "y": 2, "angle": 0.5, "sector": 0}
+    "player": {"x": 24, "y": 2, "angle": 0.5, "sector": 8}
 }

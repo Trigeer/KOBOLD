@@ -54,7 +54,7 @@ function love.load()
     end
 
     local result = lod.loadMapGeometry(pack .. "_geometry.json")
-    textures  = lod.loadMapTexturing(pack .. "_texturing.lua")
+    textures  = lod.loadMapTexturing(pack .. "_texturing.json")
 
     sectorArr = result[1]
     camera    = result[2]
