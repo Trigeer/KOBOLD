@@ -21,13 +21,11 @@ local flags = {}
 -- This should be renamed
 local dummy = {}
 local mode
-local eventful = false
+local eventful = true
+
+local columns = 0
 
 function love.load()
-    print("Input map package")
-    io.write("package> ")
-    local pack = io.read("*l")
-
     -- print("Select mode:")
     -- print("  1 for Online")
     -- print("  2 for Offline")
@@ -38,13 +36,20 @@ function love.load()
     local port = 0
     local user = 'NULL'
 
+    -- print("Input map package")
+    -- io.write("package> ")
+    -- local pack = io.read("*l")
+    local pack = 'maps/prez/p'
+
     if modeNum == 1 then
         mode = true
-
+        eventful = false
         io.write("host IP> ")
-        ip = io.read("*l")
+        -- ip = io.read("*l")
+        ip = "localhost"
         io.write("host port> ")
-        port = io.read("*n")
+        -- port = io.read("*n")
+        port = 44735
         io.write("username> ")
         user = io.read("*l")
     elseif modeNum == 2 then
@@ -53,19 +58,23 @@ function love.load()
         error("Illegal mode...")
     end
 
-    local result = lod.loadMapGeometry(pack .. "_geometry.json")
     textures  = lod.loadMapTexturing(pack .. "_texturing.json")
 
-    sectorArr = result[1]
-    camera    = result[2]
-
     if eventful then
-        controllers, triggers, eventsArr, flags = lod.loadMapDynamics("maps/testing_ground/header.json", sectorArr)
+        controllers, triggers, eventsArr, flags = lod.loadMapDynamics(pack .. "_header.json", sectorArr)
     end
 
     if mode then
-        net.connect(ip, port, user)
-        net.send(0, {ws = 0, ad = 0}, false, camera.angle)
+        local serial = net.connect(ip, port, user)
+        -- net.send(0, {ws = 0, ad = 0}, false, 0)
+
+        local result = lod.loadMapGeometryString(serial)
+        sectorArr = result[1]
+        camera    = result[2]
+    else
+        local result = lod.loadMapGeometry(pack .. "_geometry.json")
+        sectorArr = result[1]
+        camera    = result[2]
     end
 
     -- dummy = {{
@@ -105,8 +114,8 @@ function love.update(dt)
         if w and not s then mod.ws = 1 elseif not w and s then mod.ws = -1 end
         if a and not d then mod.ad = 1 elseif not a and d then mod.ad = -1 end
 
-        local response, uuid = net.receive()
         net.send(dt, mod, love.keyboard.isDown("space"), camera.angle)
+        local response, uuid, serial = net.receive()
 
         if response then
             for index, value in ipairs(response) do
@@ -130,6 +139,11 @@ function love.update(dt)
                 end
             end
         end
+
+        if serial then
+            local result = lod.loadMapGeometryString(serial)
+            sectorArr = result[1]
+        end
     else
         local visited = mov.calculateMove(
             sectorArr, eventsArr, controllers, triggers, flags,
@@ -142,10 +156,12 @@ function love.update(dt)
             love.keyboard.isDown("d")
         )
     end
+
+    columns = columns+1
 end
 
 function love.draw()
-    gpx.drawScreen(sectorArr, dummy, textures, camera)
+    gpx.drawScreen(sectorArr, dummy, textures, camera, columns)
 end
 
 -- Look around

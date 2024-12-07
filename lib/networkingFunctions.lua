@@ -14,7 +14,9 @@ net.connect = function (host_ip, port, name)
 
     server:connect(ip, port)
     uuid = server:receive() + 1
+    local geom = server:receive()
     server:send(name .. "\r\n")
+    return geom
 end
 
 net.send = function (dt, mod, jump, rotation)
@@ -25,13 +27,18 @@ net.send = function (dt, mod, jump, rotation)
 end
 
 net.receive = function ()
+    local serial = nil
     local response = server:receive()
+    local rec = server:receive()
     local decoded = nil
     if response then
-        decoded = luna.decode(response)
+        decoded = luna.decode(rec)
+        if response == "2" then
+            serial = server:receive()
+        end
     end
     
-    return decoded, uuid
+    return decoded, uuid, serial
 end
 
 net.close = function ()

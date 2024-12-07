@@ -1,0 +1,22 @@
+{
+    "sources": [
+        "C:/Users/grzeb/OneDrive/Pulpit/KOBOLD/maps/prez/functions.lua"
+    ],
+    "functions": [
+        {
+            "name":    "sine_wave",
+            "type":    "event",
+            "enabled": true,
+            "looping": true,
+            "loop":    10
+        },
+        {
+            "name":    "wall",
+            "type":    "event",
+            "enabled": true,
+            "looping": true,
+            "loop":    10
+        }
+    ],
+    "flags": {}
+}

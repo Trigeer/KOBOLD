@@ -4,7 +4,7 @@ local Event = {
     looping = true,
     clock   = 0,
     loop    = 0,
-    code = function (clock)
+    code = function (flags, clock)
         print("Empty...")
     end
 }
@@ -12,10 +12,10 @@ local Event = {
 -- Create new sector
 function Event:new (enabled, looping, loop, code)
     local event = {
-        enabled = enabled or true,
-        looping = looping or true,
+        enabled = enabled,
+        looping = looping,
         loop    = loop    or 0,
-        code    = code    or function (clock) print("Empty...") end
+        code    = code    or function (flags, clock) print("Empty...") end
     }
 
     setmetatable(event, self)
@@ -37,8 +37,8 @@ function Event:advanceClock (dt)
     end
 end
 
-function Event:execute ()
-    return self.code(self.clock)
+function Event:execute (flags)
+    return self.code(flags, self.clock)
 end
 
 return Event

@@ -66,7 +66,7 @@ end
 -- Set new value for given node
 function Sector:nodeSet (index, x, y)
     local indexCur = ((index - 2) % #self.nodes) + 1
-    local indexMin = ((index - 3) % #self.nodes) + 1
+    local indexMin = ((index - 1) % #self.nodes) + 1
 
     self.nodes[indexCur].x = x
     self.nodes[indexCur].y = y
